@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Databricks Associate Exam: The Data Intelligence Platform Explained</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ── DESIGN TOKENS (matching databricksprep.com) ── */
+  :root {
+    --brand:       #E63B2E;
+    --brand-dark:  #C42E22;
+    --ink:         #111827;
+    --ink2:        #374151;
+    --ink3:        #6B7280;
+    --ink4:        #9CA3AF;
+    --surface:     #F9FAFB;
+    --surface2:    #F3F4F6;
+    --white:       #FFFFFF;
+    --border:      #E5E7EB;
+    --green:       #059669;
+    --green-bg:    #ECFDF5;
+    --green-bdr:   #A7F3D0;
+    --amber:       #D97706;
+    --amber-bg:    #FFFBEB;
+    --amber-bdr:   #FDE68A;
+    --blue:        #2563EB;
+    --blue-bg:     #EFF6FF;
+    --blue-bdr:    #BFDBFE;
+    --red-bg:      #FEF2F2;
+    --red-bdr:     #FECACA;
+    --mono:        'JetBrains Mono', monospace;
+    --sans:        'Inter', system-ui, sans-serif;
+    --radius:      8px;
+    --shadow:      0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--surface);
+    color: var(--ink);
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── SITE NAV ── */
+  .site-nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .site-nav-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .site-nav-brand {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .site-nav-brand-dot {
+    width: 8px; height: 8px;
+    background: var(--brand);
+    border-radius: 50%;
+  }
+  .site-nav-back {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink3);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s;
+  }
+  .site-nav-back:hover { color: var(--brand); }
+
+  /* ── ARTICLE HEADER ── */
+  .article-header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 24px 44px;
+  }
+  .article-header-inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .article-meta-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+  }
+  .pill-brand { background: var(--red-bg); color: var(--brand); border: 1px solid var(--red-bdr); }
+  .pill-gray  { background: var(--surface2); color: var(--ink3); border: 1px solid var(--border); }
+
+  .article-title {
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin-bottom: 16px;
+  }
+  .article-title em {
+    font-style: italic;
+    color: var(--brand);
+  }
+  .article-desc {
+    font-size: 17px;
+    color: var(--ink2);
+    line-height: 1.6;
+    max-width: 620px;
+    margin-bottom: 24px;
+  }
+  .article-meta-bottom {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--ink3);
+    flex-wrap: wrap;
+  }
+  .article-meta-bottom span { display: flex; align-items: center; gap: 5px; }
+
+  /* ── BODY LAYOUT ── */
+  .article-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--brand);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 24px 28px;
+    margin-bottom: 48px;
+  }
+  .toc h3 {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink4);
+    margin-bottom: 14px;
+  }
+  .toc ol { list-style: none; counter-reset: toc; display: grid; gap: 6px; padding: 0; }
+  .toc li { counter-increment: toc; }
+  .toc a {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink2);
+    text-decoration: none;
+    transition: color 0.12s;
+  }
+  .toc a:hover { color: var(--brand); }
+  .toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--brand);
+    flex-shrink: 0;
+  }
+
+  /* ── TYPOGRAPHY ── */
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin: 56px 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--surface2);
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 32px 0 12px;
+    letter-spacing: -0.01em;
+  }
+  p {
+    color: var(--ink2);
+    margin-bottom: 18px;
+    font-size: 16px;
+    line-height: 1.75;
+  }
+  strong { font-weight: 600; color: var(--ink); }
+  a { color: var(--blue); text-decoration: underline; text-underline-offset: 2px; }
+
+  ul, ol.body-list {
+    margin: 0 0 20px 0;
+    padding: 0;
+    list-style: none;
+  }
+  ul li, ol.body-list li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 8px;
+    color: var(--ink2);
+    font-size: 16px;
+  }
+  ul li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--brand);
+    font-size: 16px;
+    line-height: 1.75;
+  }
+  ol.body-list { counter-reset: body-list; }
+  ol.body-list li { counter-increment: body-list; }
+  ol.body-list li::before {
+    content: counter(body-list) '.';
+    position: absolute;
+    left: 0;
+    color: var(--brand);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    top: 4px;
+  }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    display: flex;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    margin: 24px 0;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+  .callout-body { flex: 1; }
+  .callout-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .callout p  { font-size: 14.5px; margin-bottom: 0; line-height: 1.6; }
+  .callout li { font-size: 14.5px; }
+
+  .callout-exam  { background: var(--red-bg);   border: 1px solid var(--red-bdr); }
+  .callout-exam .callout-title { color: var(--brand); }
+
+  .callout-warn  { background: var(--amber-bg); border: 1px solid var(--amber-bdr); }
+  .callout-warn .callout-title { color: var(--amber); }
+
+  .callout-tip   { background: var(--green-bg); border: 1px solid var(--green-bdr); }
+  .callout-tip .callout-title  { color: var(--green); }
+
+  .callout-info  { background: var(--blue-bg);  border: 1px solid var(--blue-bdr); }
+  .callout-info .callout-title { color: var(--blue); }
+
+  /* ── SECTION BADGE ── */
+  .section-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--brand);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  /* ── CODE ── */
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--surface2);
+    color: var(--ink);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .code-block-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ink4);
+    margin-bottom: 6px;
+    display: block;
+  }
+  pre {
+    background: #0F172A;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    overflow-x: auto;
+    margin: 8px 0 24px;
+    border: 1px solid #1E293B;
+  }
+  pre code {
+    background: none;
+    color: #CBD5E1;
+    font-size: 13px;
+    padding: 0;
+    border: none;
+    line-height: 1.75;
+  }
+  .kw  { color: #C084FC; }
+  .str { color: #86EFAC; }
+  .cm  { color: #475569; font-style: italic; }
+  .fn  { color: #7DD3FC; }
+  .num { color: #FCA5A5; }
+  .cl  { color: #FDE68A; }
+
+  /* ── COMPARISON GRID ── */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 24px 0;
+  }
+  .compare-card {
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .compare-bad  { background: var(--red-bg);   border: 1px solid var(--red-bdr); }
+  .compare-good { background: var(--green-bg); border: 1px solid var(--green-bdr); }
+  .compare-card h4 {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .compare-bad h4  { color: var(--brand); }
+  .compare-good h4 { color: var(--green); }
+  .compare-card ul li { font-size: 14px; }
+
+  /* ── ARCHITECTURE BOX ── */
+  .arch-box {
+    background: #0F172A;
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    margin: 24px 0;
+  }
+  .arch-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #475569;
+    margin-bottom: 16px;
+  }
+  .arch-row { display: grid; gap: 8px; margin-bottom: 8px; }
+  .arch-5   { grid-template-columns: repeat(5, 1fr); }
+  .arch-1   { grid-template-columns: 1fr; }
+  .arch-tile {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .arch-tile-red    { border-color: rgba(230,59,46,0.4);  background: rgba(230,59,46,0.08); }
+  .arch-tile-blue   { border-color: rgba(37,99,235,0.4);  background: rgba(37,99,235,0.08); }
+  .arch-tile-green  { border-color: rgba(5,150,105,0.4);  background: rgba(5,150,105,0.08); }
+  .arch-tile-purple { border-color: rgba(124,58,237,0.4); background: rgba(124,58,237,0.08); }
+  .arch-tile-amber  { border-color: rgba(217,119,6,0.4);  background: rgba(217,119,6,0.08); }
+  .arch-tile-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.88);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .arch-tile-sub {
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.35);
+    display: block;
+  }
+  .arch-sep {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #334155;
+    padding: 6px 0;
+    position: relative;
+  }
+  .arch-sep::before, .arch-sep::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 38%;
+    height: 1px;
+    background: #1E293B;
+  }
+  .arch-sep::before { left: 0; }
+  .arch-sep::after  { right: 0; }
+
+  /* ── COMPARISON TABLE ── */
+  .table-wrap { overflow-x: auto; margin: 24px 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  th {
+    background: var(--ink);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 12px 14px;
+    text-align: left;
+  }
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink2);
+    vertical-align: top;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: var(--surface); }
+  .tag {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+  }
+  .tag-red    { background: var(--red-bg);   color: var(--brand);  border: 1px solid var(--red-bdr); }
+  .tag-green  { background: var(--green-bg); color: var(--green);  border: 1px solid var(--green-bdr); }
+  .tag-amber  { background: var(--amber-bg); color: var(--amber);  border: 1px solid var(--amber-bdr); }
+  .tag-blue   { background: var(--blue-bg);  color: var(--blue);   border: 1px solid var(--blue-bdr); }
+  .tag-gray   { background: var(--surface2); color: var(--ink3);   border: 1px solid var(--border); }
+
+  /* ── Q&A BLOCKS ── */
+  .qa-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 18px 0;
+    box-shadow: var(--shadow);
+  }
+  .qa-q {
+    background: var(--surface2);
+    padding: 14px 18px;
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--ink);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .qa-q::before {
+    content: 'Q';
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: var(--ink);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    font-family: var(--mono);
+    margin-top: 1px;
+  }
+  .qa-a {
+    padding: 14px 18px;
+    font-size: 14.5px;
+    color: var(--ink2);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .qa-a::before {
+    content: 'A';
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: var(--green);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    font-family: var(--mono);
+    margin-top: 1px;
+  }
+  .qa-answer-text strong { color: var(--green); }
+
+  /* ── SUMMARY CHEATSHEET ── */
+  .cheatsheet {
+    background: var(--ink);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin: 32px 0;
+  }
+  .cheatsheet h3 {
+    color: var(--white);
+    font-size: 16px;
+    margin: 0 0 20px;
+    letter-spacing: -0.01em;
+  }
+  .cheat-row {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    align-items: baseline;
+  }
+  .cheat-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .cheat-key {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: #FDE68A;
+    flex-shrink: 0;
+    width: 170px;
+    padding-top: 1px;
+  }
+  .cheat-val {
+    font-size: 13.5px;
+    color: rgba(255,255,255,0.62);
+    line-height: 1.55;
+  }
+  .cheat-val code {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #93C5FD;
+    font-size: 12px;
+  }
+
+  /* ── PULLQUOTE ── */
+  .pullquote {
+    border-left: 3px solid var(--brand);
+    padding: 4px 0 4px 20px;
+    margin: 28px 0;
+  }
+  .pullquote p {
+    font-size: 18px;
+    font-style: italic;
+    color: var(--ink2);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  /* ── ARTICLE FOOTER ── */
+  .article-footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 24px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .coffee-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow);
+  }
+  .coffee-text { flex: 1; min-width: 200px; }
+  .coffee-text strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .coffee-text p { font-size: 14px; color: var(--ink3); margin: 0; }
+  .coffee-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--brand);
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .coffee-btn:hover { background: var(--brand-dark); }
+
+  .footer-series {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink4);
+  }
+
+  /* ── NEXT ARTICLE TEASER ── */
+  .next-article {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--brand);
+    border-radius: 0 0 var(--radius) var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .next-article-label {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink4);
+    margin-bottom: 3px;
+  }
+  .next-article-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .compare-grid { grid-template-columns: 1fr; }
+    .arch-5 { grid-template-columns: repeat(2, 1fr); }
+    .cheat-row { flex-direction: column; gap: 4px; }
+    .cheat-key { width: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SITE NAV -->
+<nav class="site-nav">
+  <div class="site-nav-inner">
+    <a href="index.html" class="site-nav-brand">
+      <span class="site-nav-brand-dot"></span>
+      DataBricks Prep
+    </a>
+    <a href="index.html" class="site-nav-back">← Back to all topics</a>
+  </div>
+</nav>
+
+<!-- ARTICLE HEADER -->
+<header class="article-header">
+  <div class="article-header-inner">
+    <div class="article-meta-top">
+      <span class="pill pill-brand">Databricks Associate · Section 1.2</span>
+      <span class="pill pill-gray">~20 min read</span>
+    </div>
+    <h1 class="article-title">Explain the Value of the <em>Data Intelligence Platform</em></h1>
+    <p class="article-desc">What makes the Databricks platform different, why it was built, and everything you need to know about its architecture for the Data Engineer Associate exam.</p>
+    <div class="article-meta-bottom">
+      <span>📋 Databricks Associate Exam Guide</span>
+      <span>·</span>
+      <span>Subdomain 1.2</span>
+      <span>·</span>
+      <span>~20 min read</span>
+    </div>
+  </div>
+</header>
+
+<!-- ARTICLE BODY -->
+<main class="article-body">
+
+  <!-- TABLE OF CONTENTS -->
+  <nav class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+      <li><a href="#why">Why this section matters</a></li>
+      <li><a href="#problem">The problem with traditional architectures</a></li>
+      <li><a href="#lakehouse">The Lakehouse — the core idea</a></li>
+      <li><a href="#delta-lake">Delta Lake — the engine under the hood</a></li>
+      <li><a href="#pillars">The five pillars of the platform</a></li>
+      <li><a href="#unity">Unity Catalog — unified governance</a></li>
+      <li><a href="#photon">Photon — the speed layer</a></li>
+      <li><a href="#openness">Open source and multi-cloud philosophy</a></li>
+      <li><a href="#exam-tips">Exam tips and practice questions</a></li>
+      <li><a href="#summary">Quick-reference cheat sheet</a></li>
+    </ol>
+  </nav>
+
+  <!-- 01 WHY -->
+  <section id="why">
+    <span class="section-badge">01 — Why This Matters</span>
+    <h2>Why this section matters more than you think</h2>
+
+    <p>Many candidates preparing for the Databricks Certified Data Engineer Associate exam rush past the conceptual sections to get to the "real" content — Apache Spark, Delta Lake operations, and pipeline code. That is a mistake.</p>
+
+    <p>The <strong>"Explain the value of the Data Intelligence Platform"</strong> section is foundational. It is the biggest predictor of whether a candidate truly understands Databricks or has simply memorised commands. The exam will probe your understanding of <em>why</em> the platform exists, what architectural problem it solves, and how its components relate to each other.</p>
+
+    <div class="pullquote">
+      <p>If you understand why the Lakehouse was invented, every other concept in the exam starts to make sense. The platform was built to solve a specific set of failures. Know the failures, and the solutions explain themselves.</p>
+    </div>
+
+    <p>This section is entirely conceptual — you will not be asked to write code here. But you will be asked to identify which component solves which problem, distinguish between platform layers, and reason about architectural tradeoffs. Let's build that understanding from the ground up.</p>
+  </section>
+
+  <!-- 02 PROBLEM -->
+  <section id="problem">
+    <span class="section-badge">02 — The Problem</span>
+    <h2>The problem with traditional data architectures</h2>
+
+    <p>To understand why Databricks built what it built, you need to understand the world before it. For most organisations in the 2010s, the data stack looked like one of two things: a <strong>data lake</strong> or a <strong>data warehouse</strong>. Both were deeply flawed.</p>
+
+    <h3>The data warehouse: reliable but expensive and rigid</h3>
+    <p>Data warehouses — think Teradata, Amazon Redshift, Google BigQuery, Snowflake — are purpose-built for structured, tabular data. They give you ACID transactions, schema enforcement, fast SQL queries, and reliable performance. For business intelligence, they work brilliantly.</p>
+    <p>But they come with serious limitations. Proprietary formats mean your data is locked in. They are expensive to scale. They struggle with unstructured data — images, audio, text, logs. And they cannot run machine learning workloads natively. To train an ML model, you had to copy data <em>out</em> of the warehouse into a separate system — creating stale, duplicated data and governance nightmares.</p>
+
+    <h3>The data lake: flexible but chaotic</h3>
+    <p>Data lakes — built on cloud object storage like Amazon S3, Azure Data Lake Storage, or Google Cloud Storage — were the opposite. Dirt cheap. Infinitely scalable. Open formats. You could dump anything in: structured CSVs, semi-structured JSON, unstructured images, streaming logs.</p>
+    <p>But data lakes had a different set of problems. No ACID transactions meant concurrent writes could corrupt data. No schema enforcement meant data quality deteriorated into what engineers called a <em>data swamp</em>. No versioning or rollback. Poor SQL query performance. And no single governance layer — security and access control had to be bolted on separately for every tool that touched the lake.</p>
+
+    <div class="compare-grid">
+      <div class="compare-card compare-bad">
+        <h4>Data Warehouse problems</h4>
+        <ul>
+          <li>Proprietary format, vendor lock-in</li>
+          <li>Cannot handle unstructured data</li>
+          <li>ML workloads require data copies</li>
+          <li>Expensive at scale</li>
+          <li>BI and ML tools can't coexist</li>
+        </ul>
+      </div>
+      <div class="compare-card compare-bad">
+        <h4>Data Lake problems</h4>
+        <ul>
+          <li>No ACID transactions — corruption risk</li>
+          <li>No schema enforcement — data swamps</li>
+          <li>Poor SQL query performance</li>
+          <li>Governance bolted on separately</li>
+          <li>No versioning or rollback</li>
+        </ul>
+      </div>
+    </div>
+
+    <p>The result? Most organisations ran <em>both</em>. A data lake for raw data and ML. A warehouse for BI. An ETL pipeline copying data between them. Two bills. Two governance policies. Stale data. Duplicated storage. This is the pain Databricks was built to eliminate.</p>
+
+    <div class="callout callout-exam">
+      <span class="callout-icon">🎯</span>
+      <div class="callout-body">
+        <div class="callout-title">Exam Relevance</div>
+        <p>The exam may present a scenario — "a company runs BI on a warehouse and ML on a data lake but is frustrated by data duplication and stale models" — and ask which architecture Databricks recommends. The answer is always the <strong>Lakehouse</strong>. Know this problem deeply so the solution is obvious.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 LAKEHOUSE -->
+  <section id="lakehouse">
+    <span class="section-badge">03 — The Lakehouse</span>
+    <h2>The Lakehouse: the core idea</h2>
+
+    <p>The Lakehouse is the architectural concept at the heart of Databricks. The concept is deceptively simple: <strong>add the reliability and performance of a data warehouse on top of open-format cloud object storage</strong>.</p>
+
+    <p>A single copy of data. Open file formats that no vendor can lock you into. ACID transactions so your data is always consistent. Schema enforcement so quality doesn't degrade. Fast SQL query performance. And the ability to run machine learning workloads directly on the same data — no copies, no ETL pipeline between systems.</p>
+
+    <div class="arch-box">
+      <div class="arch-label">Lakehouse architecture — single platform, open format</div>
+      <div class="arch-row arch-5">
+        <div class="arch-tile arch-tile-blue">
+          <span class="arch-tile-name">SQL Analytics</span>
+          <span class="arch-tile-sub">Databricks SQL</span>
+        </div>
+        <div class="arch-tile arch-tile-blue">
+          <span class="arch-tile-name">Data Engineering</span>
+          <span class="arch-tile-sub">Spark, DLT</span>
+        </div>
+        <div class="arch-tile arch-tile-blue">
+          <span class="arch-tile-name">ML &amp; AI</span>
+          <span class="arch-tile-sub">MLflow, AutoML</span>
+        </div>
+        <div class="arch-tile arch-tile-blue">
+          <span class="arch-tile-name">Streaming</span>
+          <span class="arch-tile-sub">Structured Streaming</span>
+        </div>
+        <div class="arch-tile arch-tile-purple">
+          <span class="arch-tile-name">Governance</span>
+          <span class="arch-tile-sub">Unity Catalog</span>
+        </div>
+      </div>
+      <div class="arch-sep">Delta Lake reliability layer</div>
+      <div class="arch-row arch-1">
+        <div class="arch-tile arch-tile-green">
+          <span class="arch-tile-name">Open cloud object storage (S3 / ADLS / GCS) — Parquet / ORC open formats</span>
+          <span class="arch-tile-sub">Single copy of data · no proprietary lock-in · infinite scale · low cost</span>
+        </div>
+      </div>
+    </div>
+
+    <p>The critical insight is that the Lakehouse does not replace your storage with something proprietary. Your data still lives in standard Parquet files on S3, Azure Data Lake, or GCS — formats you own. Delta Lake is a <em>layer on top</em> of that storage that adds the transaction log, schema enforcement, and indexing structures that make data warehouse guarantees possible on a data lake.</p>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <div class="callout-title">Key Mental Model</div>
+        <p>Think of a Delta table as a Parquet table with a <code>_delta_log</code> folder sitting next to the data files. That transaction log transforms cheap object storage into a reliable, ACID-compliant data store. Everything else — time travel, schema enforcement, concurrent writes — flows from that log.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 DELTA LAKE -->
+  <section id="delta-lake">
+    <span class="section-badge">04 — Delta Lake</span>
+    <h2>Delta Lake: the engine under the hood</h2>
+
+    <p>Delta Lake is the open-source storage layer that makes the Lakehouse possible. It is not a separate database or service — it is a set of conventions and metadata structures that sit on top of existing cloud object storage. Understanding Delta Lake is non-negotiable for this exam.</p>
+
+    <h3>ACID transactions</h3>
+    <p>Delta Lake uses an optimistic concurrency model backed by a JSON-based transaction log. Every operation — insert, update, delete, merge — is recorded as an atomic commit. Multiple writers can operate concurrently without corrupting each other's data, and a failed write never leaves the table in a partial state.</p>
+
+    <h3>Time travel</h3>
+    <p>Because every operation is logged, you can query the table as it existed at any previous point in time. This is called time travel. You can query by version number or by timestamp. This is invaluable for auditing, debugging bad data, and rolling back mistakes.</p>
+
+    <span class="code-block-label">SQL — Time travel examples</span>
+    <pre><code><span class="cm">-- Query by version number</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> my_table <span class="kw">VERSION AS OF</span> 5;
+
+<span class="cm">-- Query by timestamp</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> my_table <span class="kw">TIMESTAMP AS OF</span> <span class="str">'2024-01-15 09:00:00'</span>;
+
+<span class="cm">-- Python / DataFrame API</span>
+df = spark.read.format(<span class="str">"delta"</span>) \
+    .option(<span class="str">"versionAsOf"</span>, 5) \
+    .load(<span class="str">"/path/to/table"</span>)</code></pre>
+
+    <h3>Schema enforcement and evolution</h3>
+    <p>When you write data to a Delta table, Databricks checks that the incoming schema matches the table's defined schema. A mismatch throws an error by default — protecting data quality. When you deliberately want to add new columns, you can enable schema evolution with <code>mergeSchema</code>, and Delta will expand the table's schema automatically.</p>
+
+    <h3>The <code>_delta_log</code> folder</h3>
+    <p>This is the physical heart of a Delta table. It is a directory sitting alongside your data files containing a series of JSON transaction log entries. Each commit creates a new JSON file recording exactly what changed. Delta periodically compacts older JSON files into Parquet checkpoint files for faster metadata reads.</p>
+
+    <span class="code-block-label">File structure of a Delta table on cloud storage</span>
+    <pre><code>my_table/
+├── _delta_log/                          <span class="cm"># transaction log directory</span>
+│   ├── 00000000000000000000.json        <span class="cm"># first commit</span>
+│   ├── 00000000000000000001.json        <span class="cm"># second commit</span>
+│   └── 00000000000000000010.checkpoint.parquet
+├── part-00000-abc123.snappy.parquet     <span class="cm"># actual data files</span>
+└── part-00001-def456.snappy.parquet</code></pre>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <div class="callout-title">Common Exam Pitfall</div>
+        <p>Delta Lake is <strong>open source and not exclusive to Databricks</strong>. You can use Delta Lake on any Spark-compatible platform. Databricks builds its platform on top of Delta Lake and is its primary sponsor — but they are separate things. Do not treat them as synonyms.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 FIVE PILLARS -->
+  <section id="pillars">
+    <span class="section-badge">05 — The Five Pillars</span>
+    <h2>The five pillars of the Data Intelligence Platform</h2>
+
+    <p>Databricks has evolved its positioning beyond just the Lakehouse. The current product framing is the <strong>Data Intelligence Platform</strong> — a single platform covering five major workload categories. The exam expects you to know what each pillar does and which Databricks components belong to it.</p>
+
+    <h3>Pillar 1: Data Engineering</h3>
+    <p>This is the core use case for the associate exam. Data engineering on Databricks means building reliable ETL/ELT pipelines using Apache Spark, Lakeflow Pipelines (formerly Delta Live Tables), AutoLoader for incremental ingestion, and Databricks Workflows for orchestration. The Medallion Architecture — Bronze (raw), Silver (cleansed), Gold (aggregated) — is the canonical data engineering pattern on the platform.</p>
+
+    <h3>Pillar 2: Data Warehousing — Databricks SQL</h3>
+    <p>Databricks SQL is the warehousing layer. It provides a SQL editor, dashboards, and SQL warehouses (dedicated compute optimised for query performance). BI tools like Power BI and Tableau connect to Databricks SQL to run reports directly against Delta tables — without any data movement. The Photon engine powers Databricks SQL's query speed.</p>
+
+    <h3>Pillar 3: Data Streaming</h3>
+    <p>Databricks supports real-time data processing through Structured Streaming — Spark's streaming API that treats a live stream as an unbounded table. Lakeflow Pipelines extends this with streaming table support. Sources like Apache Kafka, AWS Kinesis, and Azure Event Hubs connect directly.</p>
+
+    <h3>Pillar 4: Data Science and Machine Learning</h3>
+    <p>MLflow is Databricks' open-source ML lifecycle tool covering experiment tracking, model registry, model serving, and deployment. Databricks also provides Feature Store (a central repository of reusable ML features), AutoML, and Mosaic AI for generative AI workloads. Because all ML data lives in Delta tables, models and BI queries operate on the same fresh data — eliminating the stale-model problem.</p>
+
+    <h3>Pillar 5: Data Governance — Unity Catalog</h3>
+    <p>Unity Catalog is the single governance layer that sits above all five pillars, providing unified access control, audit logging, data lineage, and data discovery across the entire platform. Covered in detail in the next section.</p>
+
+    <div class="callout callout-exam">
+      <span class="callout-icon">🎯</span>
+      <div class="callout-body">
+        <div class="callout-title">Exam Focus</div>
+        <p>The exam will not ask you to name all five pillars from memory. It will describe a workload — "a team wants to track ML experiments and register model versions" — and ask which component handles it (MLflow / Model Registry). Match workloads to platform components.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 UNITY CATALOG -->
+  <section id="unity">
+    <span class="section-badge">06 — Unity Catalog</span>
+    <h2>Unity Catalog: governance for the whole platform</h2>
+
+    <p>Unity Catalog is one of the most heavily tested topics in the associate exam's platform fundamentals section. It is Databricks' unified governance solution — a single place to manage access controls, audit logs, data lineage, and data discovery across all data and AI assets in a Databricks account.</p>
+
+    <h3>The three-level namespace</h3>
+    <p>Before Unity Catalog, every Databricks workspace had its own Hive metastore. Tables in Workspace A were invisible to Workspace B. Unity Catalog replaced this with a hierarchical three-level namespace that sits above workspaces at the account level.</p>
+
+    <span class="code-block-label">SQL — Unity Catalog three-level namespace</span>
+    <pre><code><span class="cm">-- Full qualified name: catalog.schema.table</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> prod_catalog.finance_schema.transactions;
+
+<span class="cm">-- Create a schema within a catalog</span>
+<span class="kw">CREATE SCHEMA</span> prod_catalog.finance_schema;
+
+<span class="cm">-- Grant access at table level</span>
+<span class="kw">GRANT</span> SELECT <span class="kw">ON</span> TABLE prod_catalog.finance_schema.transactions
+  <span class="kw">TO</span> <span class="str">`analysts@company.com`</span>;
+
+<span class="cm">-- Grant access to entire catalog</span>
+<span class="kw">GRANT</span> USE CATALOG <span class="kw">ON</span> CATALOG prod_catalog
+  <span class="kw">TO</span> <span class="str">`data_team@company.com`</span>;</code></pre>
+
+    <p>The three levels are: <strong>Catalog</strong> (top level — typically environment or domain: <code>prod</code>, <code>dev</code>, <code>marketing</code>), <strong>Schema</strong> (logical groupings of tables, previously called databases), and <strong>Table / View / Volume</strong> (the actual objects). Permissions granted at a higher level cascade down but can be overridden at any lower level.</p>
+
+    <h3>What Unity Catalog governs</h3>
+    <p>Unity Catalog governs the full range of data and AI assets on the platform — not just tables:</p>
+    <ul>
+      <li>Delta tables, views, and materialised views</li>
+      <li>Volumes (unstructured file storage within the governance framework)</li>
+      <li>ML models in the Model Registry</li>
+      <li>Feature Store tables</li>
+      <li>Functions and stored procedures</li>
+      <li>External locations (cloud storage paths you grant Databricks access to)</li>
+    </ul>
+
+    <h3>Data lineage and audit</h3>
+    <p>Unity Catalog automatically tracks column-level data lineage — which tables were used to produce which other tables, which columns flow into which derived columns. Every action is also logged to system tables you can query directly in SQL, giving you a complete audit trail of who accessed what data, when, and from which workspace.</p>
+
+    <div class="callout callout-exam">
+      <span class="callout-icon">🎯</span>
+      <div class="callout-body">
+        <div class="callout-title">Critical Exam Point</div>
+        <p>Unity Catalog operates at the <strong>account level</strong> — above workspaces. It replaces the legacy per-workspace Hive metastore. If an exam question mentions "unified governance across multiple workspaces" or "a single metastore for the whole organisation," the answer is <strong>Unity Catalog</strong>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 PHOTON -->
+  <section id="photon">
+    <span class="section-badge">07 — Photon</span>
+    <h2>Photon: the speed layer</h2>
+
+    <p>Photon is Databricks' native vectorised query engine, written in C++. It is the default execution engine for SQL workloads on Databricks. You do not need to know its internals for the associate exam — but you do need to know what it is, why it exists, and when it helps.</p>
+
+    <h3>Why Photon was built</h3>
+    <p>Apache Spark is written in Scala and runs on the JVM. The JVM introduces overhead that matters at high query volumes: garbage collection pauses, object serialisation costs, and the inability to use CPU SIMD vectorisation efficiently. Photon is a reimplementation of Spark's SQL and DataFrame execution engine in native C++, eliminating the JVM layer entirely. The result is dramatically faster SQL queries — typically 2–4x speed improvement on analytical workloads.</p>
+
+    <h3>What Photon accelerates — and what it doesn't</h3>
+
+    <div class="compare-grid">
+      <div class="compare-card compare-good">
+        <h4>✓ Photon accelerates</h4>
+        <ul>
+          <li>SQL queries on Delta tables</li>
+          <li>DataFrame operations (Spark SQL API)</li>
+          <li>Databricks SQL warehouse queries</li>
+          <li>ETL with heavy joins, aggregations, scans</li>
+        </ul>
+      </div>
+      <div class="compare-card compare-bad">
+        <h4>✗ Photon does NOT help</h4>
+        <ul>
+          <li>Python UDFs (still JVM/Python)</li>
+          <li>Pandas operations outside Spark SQL</li>
+          <li>Streaming micro-batch execution</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">ℹ️</span>
+      <div class="callout-body">
+        <div class="callout-title">How to Enable Photon</div>
+        <p>Photon is enabled at the <strong>cluster level</strong> — tick "Use Photon Acceleration" when creating a cluster. It is automatically on for all Databricks SQL warehouse clusters. For the exam: Photon is a cluster-level setting, not a query-level or table-level setting.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 OPEN SOURCE -->
+  <section id="openness">
+    <span class="section-badge">08 — Open Source Philosophy</span>
+    <h2>Open source and multi-cloud philosophy</h2>
+
+    <p>Databricks' positioning against its competition — primarily Snowflake and cloud-native warehouses like BigQuery and Synapse — rests heavily on its open-source foundations. This is not just marketing; it has real architectural implications the exam expects you to understand.</p>
+
+    <h3>The three open-source pillars</h3>
+    <p><strong>Apache Spark</strong> — originally created at UC Berkeley's AMPLab by Databricks' founders. Spark is the compute engine underlying everything on the platform. Because Spark is open source, Databricks workloads can in principle run anywhere Spark runs.</p>
+    <p><strong>Delta Lake</strong> — open source under the Linux Foundation. The Delta format (Parquet + transaction log) is an open standard. Tools like Apache Flink, Trino, Presto, and dbt can read Delta tables directly. Your data is not trapped in Databricks.</p>
+    <p><strong>MLflow</strong> — open source, now the most widely adopted ML lifecycle platform in the industry. ML experiments tracked in Databricks can be replicated and deployed outside it.</p>
+
+    <h3>Multi-cloud availability</h3>
+    <p>Databricks runs natively on AWS, Microsoft Azure, and Google Cloud Platform. The same workspace experience, the same Unity Catalog governance, and the same Delta Lake layer are available on all three. This is a deliberate contrast with proprietary services tied to a single provider.</p>
+
+    <div class="callout callout-exam">
+      <span class="callout-icon">🎯</span>
+      <div class="callout-body">
+        <div class="callout-title">Exam Framing</div>
+        <p>"A company wants to ensure their data remains accessible if they migrate away from Databricks. Which data format should they use?" → <strong>Delta Lake / Parquet</strong> — open formats that any Spark-compatible system can read.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 EXAM TIPS -->
+  <section id="exam-tips">
+    <span class="section-badge">09 — Practice Questions</span>
+    <h2>Exam tips and practice questions</h2>
+
+    <p>Questions in this section are scenario-based and conceptual. You will be given a business or technical scenario and asked to identify the correct Databricks component or architectural approach.</p>
+
+    <h3>Key facts to memorise</h3>
+    <ul>
+      <li>The Lakehouse combines the scalability of a data lake with the reliability of a data warehouse — on open formats</li>
+      <li>Delta Lake provides ACID transactions on cloud object storage via the <code>_delta_log</code> transaction log</li>
+      <li>Unity Catalog operates at the <strong>account level</strong> — above individual workspaces</li>
+      <li>Unity Catalog replaces the legacy per-workspace Hive metastore</li>
+      <li>Photon is a <strong>cluster-level</strong> setting — not a query or table setting</li>
+      <li>Photon does <strong>not</strong> accelerate Python UDFs</li>
+      <li>Time travel depth is limited by VACUUM retention (default: 7 days)</li>
+      <li>Delta Lake is open source — separate from Databricks the company</li>
+    </ul>
+
+    <div class="qa-block">
+      <div class="qa-q">Which component provides unified governance and access control across multiple Databricks workspaces?</div>
+      <div class="qa-a"><span class="qa-answer-text"><strong>Unity Catalog.</strong> It operates at the account level — above workspaces — providing a single governance layer for all data and AI assets. The legacy per-workspace Hive metastore could not provide cross-workspace governance.</span></div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">What enables ACID transactions on cloud object storage (S3, ADLS, GCS) in Databricks?</div>
+      <div class="qa-a"><span class="qa-answer-text"><strong>Delta Lake.</strong> Specifically, the transaction log (<code>_delta_log</code>) is what provides ACID semantics. Without Delta Lake, Parquet files on object storage have no transactional guarantees.</span></div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">A company runs BI on a data warehouse and ML on a data lake. They are frustrated by data duplication and stale model predictions. What architecture does Databricks recommend?</div>
+      <div class="qa-a"><span class="qa-answer-text"><strong>The Lakehouse architecture.</strong> A single copy of data in open Delta format supports both SQL analytics (Databricks SQL) and ML workloads (Spark / MLflow) simultaneously — eliminating data copies and staleness.</span></div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">What is the Photon engine and which workloads benefit most from enabling it?</div>
+      <div class="qa-a"><span class="qa-answer-text"><strong>Photon is Databricks' native C++ vectorised query engine.</strong> It provides the greatest benefit for SQL queries with heavy aggregations, joins, and table scans. Python UDFs and Pandas operations do not benefit from Photon.</span></div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">A data engineer wants to query a Delta table as it existed 7 days ago. Which Delta Lake feature enables this?</div>
+      <div class="qa-a"><span class="qa-answer-text"><strong>Time travel.</strong> Using <code>VERSION AS OF</code> or <code>TIMESTAMP AS OF</code>, Delta Lake can return the state of a table at any previous commit — as long as the underlying data files have not been removed by <code>VACUUM</code>.</span></div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">A new engineer accidentally writes records with a wrong schema to a Delta table. The write is rejected. What Delta Lake feature caused this?</div>
+      <div class="qa-a"><span class="qa-answer-text"><strong>Schema enforcement</strong> (schema validation). Delta Lake rejects writes whose schema doesn't match the table's registered schema by default. To allow schema changes, you must explicitly enable <code>mergeSchema</code>.</span></div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">Which three open-source projects form the foundation of the Databricks platform?</div>
+      <div class="qa-a"><span class="qa-answer-text"><strong>Apache Spark</strong> (compute engine), <strong>Delta Lake</strong> (storage layer), and <strong>MLflow</strong> (ML lifecycle). All three are open source and can be used outside of Databricks.</span></div>
+    </div>
+
+    <div class="callout callout-warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <div class="callout-title">Concepts That Trip Up Candidates</div>
+        <ul>
+          <li><strong>Delta Lake vs Databricks:</strong> Delta Lake is open source. Databricks builds on top of it. Not the same thing.</li>
+          <li><strong>Unity Catalog scope:</strong> Account-level, not workspace-level. Governs across workspaces.</li>
+          <li><strong>Photon limitations:</strong> Python UDFs and Pandas do NOT benefit from Photon.</li>
+          <li><strong>Time travel and VACUUM:</strong> VACUUM permanently deletes old files, limiting time travel depth. Default retention is 7 days.</li>
+          <li><strong>Lakehouse is an architecture:</strong> Not a product name. The product is "the Databricks Data Intelligence Platform."</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 SUMMARY -->
+  <section id="summary">
+    <span class="section-badge">10 — Quick Reference</span>
+    <h2>Quick-reference cheat sheet</h2>
+
+    <div class="cheatsheet">
+      <h3>Cheat Sheet — Subdomain 1.2</h3>
+      <div class="cheat-row">
+        <span class="cheat-key">Lakehouse</span>
+        <span class="cheat-val">Data lake (cheap, open, scalable) + data warehouse (ACID, reliable, fast SQL). One copy of data. Runs BI and ML together without copies.</span>
+      </div>
+      <div class="cheat-row">
+        <span class="cheat-key">Delta Lake</span>
+        <span class="cheat-val">Open-source storage layer on cloud object storage. Provides ACID transactions, time travel, schema enforcement via <code>_delta_log</code> transaction log.</span>
+      </div>
+      <div class="cheat-row">
+        <span class="cheat-key">Unity Catalog</span>
+        <span class="cheat-val">Account-level governance. Replaces per-workspace Hive metastore. Three-level namespace: catalog → schema → table. Covers tables, models, volumes, functions.</span>
+      </div>
+      <div class="cheat-row">
+        <span class="cheat-key">Photon engine</span>
+        <span class="cheat-val">Native C++ vectorised SQL execution. Replaces JVM-based Spark SQL layer. Enabled at <strong>cluster level</strong>. Does not help Python UDFs or Pandas.</span>
+      </div>
+      <div class="cheat-row">
+        <span class="cheat-key">5 pillars</span>
+        <span class="cheat-val">Data Engineering · Data Warehousing (Databricks SQL) · Data Streaming · Data Science &amp; ML (MLflow) · Data Governance (Unity Catalog).</span>
+      </div>
+      <div class="cheat-row">
+        <span class="cheat-key">Open source stack</span>
+        <span class="cheat-val">Apache Spark (compute) + Delta Lake (storage) + MLflow (ML lifecycle). All open source, multi-cloud (AWS, Azure, GCP).</span>
+      </div>
+      <div class="cheat-row">
+        <span class="cheat-key">Time travel</span>
+        <span class="cheat-val"><code>VERSION AS OF n</code> or <code>TIMESTAMP AS OF '...'</code>. Limited by VACUUM retention (default 7 days).</span>
+      </div>
+      <div class="cheat-row">
+        <span class="cheat-key">_delta_log</span>
+        <span class="cheat-val">Transaction log directory. JSON per commit. Periodic Parquet checkpoints. Heart of all Delta Lake guarantees.</span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>What it does</th>
+            <th>Level</th>
+            <th>Exam priority</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Delta Lake</strong></td>
+            <td>ACID + time travel + schema enforcement on cloud storage</td>
+            <td>Storage layer</td>
+            <td><span class="tag tag-red">Very high</span></td>
+          </tr>
+          <tr>
+            <td><strong>Unity Catalog</strong></td>
+            <td>Unified governance across workspaces — access, lineage, audit</td>
+            <td>Account level</td>
+            <td><span class="tag tag-red">Very high</span></td>
+          </tr>
+          <tr>
+            <td><strong>Apache Spark</strong></td>
+            <td>Distributed compute engine for all workloads</td>
+            <td>Compute layer</td>
+            <td><span class="tag tag-amber">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>Databricks SQL</strong></td>
+            <td>SQL warehousing, BI connectivity, SQL warehouses</td>
+            <td>Workload layer</td>
+            <td><span class="tag tag-amber">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>Photon</strong></td>
+            <td>C++ vectorised query execution — speeds up SQL</td>
+            <td>Cluster setting</td>
+            <td><span class="tag tag-amber">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>MLflow</strong></td>
+            <td>Experiment tracking, model registry, model serving</td>
+            <td>Workload layer</td>
+            <td><span class="tag tag-blue">Medium</span></td>
+          </tr>
+          <tr>
+            <td><strong>Hive metastore</strong></td>
+            <td>Legacy per-workspace metastore (replaced by Unity Catalog)</td>
+            <td>Workspace level</td>
+            <td><span class="tag tag-gray">Know for contrast</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>That's everything you need to know for Subdomain 1.2 of the Databricks Certified Data Engineer Associate exam. The core message is simple: <strong>Databricks built the Lakehouse to collapse two broken architectures into one</strong> — using open formats, open-source foundations, and a unified governance layer. Know the problems it solved, know its key components, and the exam questions in this section will feel straightforward.</p>
+
+    <p>Good luck on the exam!</p>
+  </section>
+
+  <!-- NEXT ARTICLE -->
+  <div class="next-article">
+    <div>
+      <div class="next-article-label">Next in the series</div>
+      <div class="next-article-title">Identify the applicable compute for a specific use case → Clusters, SQL warehouses, serverless</div>
+    </div>
+    <span style="color:var(--brand); font-size:20px; font-weight:700;">→</span>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="article-footer">
+  <div class="coffee-block">
+    <div class="coffee-text">
+      <strong>☕ Found this helpful?</strong>
+      <p>All articles are completely free — but a £3 coffee keeps me writing!</p>
+    </div>
+    <a href="https://ko-fi.com/nidhin" class="coffee-btn">☕ Buy me a coffee</a>
+  </div>
+  <div class="footer-series">
+    Databricks DE Associate — Exam Prep · New articles published regularly · Built for exam success
+  </div>
+</footer>
+
+</body>
+</html>
