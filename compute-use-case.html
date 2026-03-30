@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Identify the applicable compute to use for a specific use case — Databricks DE Associate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --text: #e8eaf6;
+      --muted: #7c82a8;
+      --accent: #ff3621;
+      --accent2: #00c7b1;
+      --accent3: #ffa500;
+      --heading-font: 'Georgia', serif;
+      --body-font: system-ui, -apple-system, sans-serif;
+      --code-font: 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 2rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-right { display: flex; gap: 1rem; align-items: center; }
+    .nav-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 0.25rem 0.75rem;
+    }
+
+    /* HERO */
+    .hero {
+      max-width: 780px;
+      margin: 4rem auto 0;
+      padding: 0 2rem;
+    }
+    .article-meta {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 0.2rem 0.6rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .tag.live { background: rgba(0,199,177,0.1); border-color: var(--accent2); color: var(--accent2); }
+    .tag.section { background: rgba(255,54,33,0.08); border-color: var(--accent); color: var(--accent); }
+
+    h1 {
+      font-family: var(--heading-font);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      line-height: 1.2;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2rem;
+    }
+
+    /* ARTICLE BODY */
+    .article-body {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+    }
+
+    h2 {
+      font-family: var(--heading-font);
+      font-size: 1.45rem;
+      color: #fff;
+      margin: 2.8rem 0 0.9rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 2rem 0 0.6rem;
+    }
+    p { margin-bottom: 1rem; color: #c8cce8; }
+
+    /* CALLOUT BOXES */
+    .callout {
+      border-radius: 8px;
+      padding: 1.2rem 1.4rem;
+      margin: 1.5rem 0;
+      border-left: 4px solid;
+      font-size: 0.95rem;
+    }
+    .callout.blue { background: rgba(99,131,255,0.07); border-color: #6383ff; }
+    .callout.green { background: rgba(0,199,177,0.07); border-color: var(--accent2); }
+    .callout.orange { background: rgba(255,165,0,0.07); border-color: var(--accent3); }
+    .callout.red { background: rgba(255,54,33,0.07); border-color: var(--accent); }
+    .callout-title {
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.5rem;
+    }
+    .callout.blue .callout-title { color: #6383ff; }
+    .callout.green .callout-title { color: var(--accent2); }
+    .callout.orange .callout-title { color: var(--accent3); }
+    .callout.red .callout-title { color: var(--accent); }
+
+    /* COMPUTE CARDS */
+    .compute-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .compute-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.3rem;
+      transition: border-color 0.2s;
+    }
+    .compute-card:hover { border-color: var(--muted); }
+    .compute-card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .compute-card h4 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .compute-card p { font-size: 0.85rem; color: var(--muted); margin: 0; }
+    .compute-card .keyword {
+      display: inline-block;
+      margin-top: 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      color: var(--accent2);
+      padding: 0.2rem 0.5rem;
+      font-family: var(--code-font);
+    }
+
+    /* DECISION TABLE */
+    .decision-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .decision-table thead tr {
+      background: var(--surface2);
+    }
+    .decision-table th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    .decision-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: #c8cce8;
+    }
+    .decision-table tr:last-child td { border-bottom: none; }
+    .decision-table tr:nth-child(odd) td { background: rgba(255,255,255,0.015); }
+    .compute-pill {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      font-family: var(--code-font);
+    }
+    .pill-cluster { background: rgba(99,131,255,0.15); color: #8ca8ff; }
+    .pill-job { background: rgba(99,131,255,0.08); color: #6b8eff; border: 1px solid rgba(99,131,255,0.2); }
+    .pill-sql { background: rgba(0,199,177,0.15); color: var(--accent2); }
+    .pill-serverless { background: rgba(255,165,0,0.15); color: var(--accent3); }
+
+    /* EXAM QUESTIONS */
+    .exam-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem;
+      margin: 1rem 0;
+    }
+    .exam-q {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+      font-size: 0.95rem;
+    }
+    .exam-q::before { content: "Q: "; color: var(--muted); }
+    .exam-a {
+      font-size: 0.9rem;
+      color: var(--accent2);
+      font-family: var(--code-font);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .exam-a::before { content: "✓"; font-family: sans-serif; }
+
+    /* TRAP LIST */
+    .trap-list { list-style: none; padding: 0; margin: 0.75rem 0; }
+    .trap-list li {
+      padding: 0.5rem 0 0.5rem 1.6rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      font-size: 0.93rem;
+      color: #c8cce8;
+    }
+    .trap-list li:last-child { border-bottom: none; }
+    .trap-list li::before {
+      content: "✗";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* REAL WORLD */
+    .realworld {
+      background: linear-gradient(135deg, rgba(255,165,0,0.06), rgba(255,54,33,0.04));
+      border: 1px solid rgba(255,165,0,0.2);
+      border-radius: 10px;
+      padding: 1.4rem;
+      margin: 2rem 0;
+    }
+    .realworld-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent3);
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+
+    /* NEXT ARTICLE */
+    .next-article {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem;
+      margin-top: 3.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      text-decoration: none;
+      transition: border-color 0.2s;
+    }
+    .next-article:hover { border-color: var(--muted); }
+    .next-label { font-size: 0.72rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.07em; margin-bottom: 0.3rem; }
+    .next-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    .next-arrow { color: var(--muted); font-size: 1.2rem; flex-shrink: 0; }
+
+    /* COFFEE */
+    .coffee-bar {
+      text-align: center;
+      padding: 2.5rem 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .coffee-bar a {
+      color: var(--accent2);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .coffee-bar a:hover { text-decoration: underline; }
+
+    /* PROGRESS BAR */
+    .progress-bar-wrap {
+      background: var(--surface2);
+      border-radius: 99px;
+      height: 4px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+      border-radius: 99px;
+      width: 15%;
+    }
+
+    /* INLINE CODE */
+    code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.1em 0.4em;
+      font-family: var(--code-font);
+      font-size: 0.88em;
+      color: #a8c0ff;
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 1rem; }
+      .hero, .article-body { padding-left: 1.2rem; padding-right: 1.2rem; }
+      h1 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-brand">Databricks <span>·</span> DE Associate</a>
+    <div class="nav-right">
+      <span class="nav-badge">Section 01 · Topic 3 of 3</span>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="article-meta">
+      <span class="tag section">Section 01</span>
+      <span class="tag live">Live</span>
+      <span class="tag">Databricks Intelligence Platform</span>
+    </div>
+    <h1>Identify the applicable compute to use for a specific use case</h1>
+    <p class="subtitle">Clusters, SQL warehouses, serverless — choosing the right compute for every scenario.</p>
+  </header>
+
+  <!-- BODY -->
+  <article class="article-body">
+
+    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+
+    <!-- CORE CONCEPT -->
+    <h2>The Core Idea</h2>
+    <p>In Databricks, compute is fully separated from storage. That means you always <em>choose</em> your compute — and the exam will test whether you choose correctly for a given scenario.</p>
+    <p>The decision comes down to four things: <strong>who is using it</strong>, <strong>what the workload is</strong>, <strong>what performance is needed</strong>, and <strong>what the governance constraints are</strong>.</p>
+
+    <div class="callout blue">
+      <div class="callout-title">Exam Mindset</div>
+      Every question about compute is really a question about the <em>workload</em>. Map the scenario to the workload type first, then the compute choice becomes obvious.
+    </div>
+
+    <!-- THREE TYPES -->
+    <h2>The Three Compute Types</h2>
+
+    <div class="compute-grid">
+      <div class="compute-card">
+        <div class="compute-card-icon">⚙️</div>
+        <h4>Clusters</h4>
+        <p>Spark compute — driver + workers. For engineering, notebooks, and ML.</p>
+        <span class="keyword">"Spark processing"</span>
+      </div>
+      <div class="compute-card">
+        <div class="compute-card-icon">📊</div>
+        <h4>SQL Warehouses</h4>
+        <p>Optimised for SQL queries and BI tools. For analysts and dashboards.</p>
+        <span class="keyword">"BI / SQL analytics"</span>
+      </div>
+      <div class="compute-card">
+        <div class="compute-card-icon">☁️</div>
+        <h4>Serverless</h4>
+        <p>Fully managed infra. For quick queries and ad-hoc work without setup.</p>
+        <span class="keyword">"no infra management"</span>
+      </div>
+    </div>
+
+    <!-- CLUSTERS -->
+    <h3>1. Clusters (All-Purpose &amp; Job)</h3>
+    <p>Clusters are Spark compute environments — a driver node plus workers. They're the backbone of data engineering and ML work.</p>
+    <p><strong>All-purpose clusters</strong> are interactive, designed for notebooks and development. <strong>Job clusters</strong> spin up for a single job, then terminate automatically — cheaper and the right choice for production pipelines.</p>
+
+    <div class="callout green">
+      <div class="callout-title">Use clusters when</div>
+      Running PySpark ETL, streaming jobs, batch transformations, ML training, or any workload requiring custom libraries, fine-grained Spark control, or Unity Catalog governance.
+    </div>
+
+    <!-- SQL WAREHOUSES -->
+    <h3>2. SQL Warehouses (Databricks SQL)</h3>
+    <p>SQL Warehouses are optimised purely for SQL queries and BI tools. They come in three flavours: <strong>Classic</strong>, <strong>Pro</strong>, and <strong>Serverless SQL Warehouse</strong>. The underlying compute is still Spark, but the interface and optimisation is all about query performance.</p>
+
+    <div class="callout green">
+      <div class="callout-title">Use SQL Warehouses when</div>
+      Business users are querying data, Power BI or Tableau dashboards are involved, or you're serving your Gold/reporting layer.
+    </div>
+
+    <!-- SERVERLESS -->
+    <h3>3. Serverless Compute</h3>
+    <p>Serverless means Databricks manages the infrastructure entirely — no cluster config, no warm-up decisions. It appears as both a <strong>Serverless SQL Warehouse</strong> and (in newer platform versions) as <strong>Serverless Jobs</strong>.</p>
+
+    <div class="callout green">
+      <div class="callout-title">Use serverless when</div>
+      You want fast ad-hoc queries with zero setup overhead — especially for analysts who don't want to manage clusters.
+    </div>
+
+    <div class="callout red">
+      <div class="callout-title">Don't use serverless when</div>
+      You're in a restricted networking environment, need private endpoints, or have complex Unity Catalog storage configurations. In those cases, a standard cluster is the correct choice — and the exam may test exactly this.
+    </div>
+
+    <!-- REAL WORLD -->
+    <div class="realworld">
+      <div class="realworld-label">🏗️ Real-world note</div>
+      <p style="margin:0; font-size:0.93rem;">A common real-world pattern: serverless fails in an enterprise environment due to private networking or Unity Catalog storage restrictions — but switching to a standard cluster with Unity Catalog resolves the issue immediately. If you see a scenario on the exam where serverless is ruled out for "security or networking reasons", the answer is <strong>Cluster</strong>.</p>
+    </div>
+
+    <!-- DECISION TABLE -->
+    <h2>Decision Framework</h2>
+    <p>When you see a scenario on the exam, run it through this table:</p>
+
+    <table class="decision-table">
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Best Compute</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>PySpark ETL pipeline</td>
+          <td><span class="compute-pill pill-cluster">Cluster</span></td>
+        </tr>
+        <tr>
+          <td>Scheduled pipeline (Jobs / ADF)</td>
+          <td><span class="compute-pill pill-job">Job Cluster</span></td>
+        </tr>
+        <tr>
+          <td>Power BI or Tableau dashboard</td>
+          <td><span class="compute-pill pill-sql">SQL Warehouse</span></td>
+        </tr>
+        <tr>
+          <td>Business analyst running SQL queries</td>
+          <td><span class="compute-pill pill-sql">SQL Warehouse</span></td>
+        </tr>
+        <tr>
+          <td>Quick ad-hoc queries, no infra management</td>
+          <td><span class="compute-pill pill-serverless">Serverless SQL Warehouse</span></td>
+        </tr>
+        <tr>
+          <td>Secure enterprise pipeline with Unity Catalog</td>
+          <td><span class="compute-pill pill-cluster">Cluster</span></td>
+        </tr>
+        <tr>
+          <td>ML model training</td>
+          <td><span class="compute-pill pill-cluster">Cluster</span></td>
+        </tr>
+        <tr>
+          <td>Gold layer reporting for CFO dashboard</td>
+          <td><span class="compute-pill pill-sql">SQL Warehouse</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- EXAM QUESTIONS -->
+    <h2>Exam-Style Practice Questions</h2>
+    <p style="font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem;">Select an answer — green means correct, red means wrong.</p>
+
+    <div class="quiz-block" id="q1">
+      <div class="quiz-q"><span class="quiz-num">Q1</span> You need to run a scheduled ETL pipeline written in PySpark. Which compute type should you use?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q1" data-correct="false">SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="true">Job Cluster</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Serverless SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">All-Purpose Cluster</button>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q2">
+      <div class="quiz-q"><span class="quiz-num">Q2</span> Business users need to query the Gold layer via Power BI. What is the appropriate compute?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q2" data-correct="false">All-Purpose Cluster</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">Job Cluster</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="true">SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">Serverless Jobs</button>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q3">
+      <div class="quiz-q"><span class="quiz-num">Q3</span> A data analyst wants to run quick SQL queries with minimal infrastructure setup. What should they use?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q3" data-correct="false">Job Cluster</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">Classic SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">All-Purpose Cluster</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="true">Serverless SQL Warehouse</button>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q4">
+      <div class="quiz-q"><span class="quiz-num">Q4</span> Your pipeline requires custom Python libraries, full Spark control, and secure data access via Unity Catalog. What compute do you choose?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Serverless SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="true">All-Purpose Cluster</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">SQL Warehouse Pro</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Serverless Jobs</button>
+      </div>
+      <div class="quiz-feedback" id="q4-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q5">
+      <div class="quiz-q"><span class="quiz-num">Q5</span> Serverless compute is failing in your environment due to private endpoint restrictions. What is the correct alternative?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q5" data-correct="false">Classic SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">Serverless SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="true">Cluster with Unity Catalog</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">SQL Warehouse Pro</button>
+      </div>
+      <div class="quiz-feedback" id="q5-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q6">
+      <div class="quiz-q"><span class="quiz-num">Q6</span> A data engineer is developing and testing PySpark transformations interactively in a notebook. Which compute is most appropriate?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q6" data-correct="true">All-Purpose Cluster</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Job Cluster</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Serverless SQL Warehouse</button>
+      </div>
+      <div class="quiz-feedback" id="q6-feedback"></div>
+    </div>
+
+    <div class="quiz-score-bar" id="score-bar" style="display:none;">
+      <span id="score-text"></span>
+      <button class="quiz-reset" onclick="resetQuiz()">↺ Try Again</button>
+    </div>
+
+    <style>
+      .quiz-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin: 1rem 0; transition: border-color 0.3s; }
+      .quiz-block.answered-correct { border-color: #00c7b1; }
+      .quiz-block.answered-wrong { border-color: var(--accent); }
+      .quiz-num { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 0.15rem 0.5rem; margin-right: 0.5rem; letter-spacing: 0.05em; vertical-align: middle; }
+      .quiz-q { font-weight: 600; color: var(--text); margin-bottom: 1rem; font-size: 0.97rem; line-height: 1.5; }
+      .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+      @media (max-width: 500px) { .quiz-options { grid-template-columns: 1fr; } }
+      .quiz-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer; text-align: left; transition: background 0.2s, border-color 0.2s, color 0.2s; font-family: var(--body-font); line-height: 1.4; }
+      .quiz-opt:hover:not(:disabled) { background: #2a2f4a; border-color: var(--muted); }
+      .quiz-opt.correct { background: rgba(0,199,177,0.15); border-color: var(--accent2); color: var(--accent2); font-weight: 600; }
+      .quiz-opt.wrong { background: rgba(255,54,33,0.12); border-color: var(--accent); color: var(--accent); }
+      .quiz-opt:disabled { cursor: default; }
+      .quiz-opt.correct:disabled { opacity: 1; }
+      .quiz-feedback { margin-top: 0.9rem; font-size: 0.88rem; }
+      .quiz-feedback.show-correct { color: var(--accent2); padding: 0.6rem 0.9rem; background: rgba(0,199,177,0.07); border-radius: 6px; border-left: 3px solid var(--accent2); }
+      .quiz-feedback.show-wrong { color: #ff8a7a; padding: 0.6rem 0.9rem; background: rgba(255,54,33,0.07); border-radius: 6px; border-left: 3px solid var(--accent); }
+      .quiz-score-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+      #score-text { font-weight: 600; font-size: 1rem; color: var(--text); }
+      .quiz-reset { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--muted); padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; font-family: var(--body-font); transition: border-color 0.2s, color 0.2s; }
+      .quiz-reset:hover { border-color: var(--muted); color: var(--text); }
+    </style>
+
+    <script>
+      var quizAnswered = {};
+      var quizExplanations = {
+        q1: 'Job Cluster — created per job, terminates automatically. Cost-efficient for scheduled production pipelines.',
+        q2: 'SQL Warehouse — purpose-built for BI tool integration and SQL query performance at scale.',
+        q3: 'Serverless SQL Warehouse — zero infrastructure management, spins up instantly, perfect for ad-hoc analytics.',
+        q4: 'All-Purpose Cluster — only clusters allow custom library installation, full Spark configuration, and Unity Catalog governance.',
+        q5: 'Cluster with Unity Catalog — serverless does not support private endpoints or complex enterprise networking.',
+        q6: 'All-Purpose Cluster — interactive, persistent, designed for iterative notebook development. Job clusters terminate after each run.'
+      };
+      var quizTotal = Object.keys(quizExplanations).length;
+
+      document.querySelectorAll('.quiz-opt').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var qId = btn.getAttribute('data-qid');
+          var isCorrect = btn.getAttribute('data-correct') === 'true';
+          if (quizAnswered[qId]) return;
+          quizAnswered[qId] = isCorrect ? 'correct' : 'wrong';
+
+          var block = document.getElementById(qId);
+          var feedback = document.getElementById(qId + '-feedback');
+          var allBtns = block.querySelectorAll('.quiz-opt');
+
+          allBtns.forEach(function(b) { b.disabled = true; });
+
+          if (isCorrect) {
+            btn.classList.add('correct');
+            block.classList.add('answered-correct');
+            feedback.textContent = '✓ Correct! ' + quizExplanations[qId];
+            feedback.className = 'quiz-feedback show-correct';
+          } else {
+            btn.classList.add('wrong');
+            block.classList.add('answered-wrong');
+            feedback.textContent = '✗ Not quite. ' + quizExplanations[qId];
+            feedback.className = 'quiz-feedback show-wrong';
+            allBtns.forEach(function(b) {
+              if (b.getAttribute('data-correct') === 'true') {
+                b.classList.add('correct');
+                b.style.opacity = '1';
+              }
+            });
+          }
+
+          if (Object.keys(quizAnswered).length === quizTotal) {
+            var correct = Object.values(quizAnswered).filter(function(v) { return v === 'correct'; }).length;
+            var pct = Math.round((correct / quizTotal) * 100);
+            var emoji = pct === 100 ? '🏆' : pct >= 67 ? '💪' : '📖';
+            document.getElementById('score-text').textContent = emoji + ' You scored ' + correct + ' / ' + quizTotal + ' (' + pct + '%)';
+            document.getElementById('score-bar').style.display = 'flex';
+          }
+        });
+      });
+
+      function resetQuiz() {
+        quizAnswered = {};
+        document.querySelectorAll('.quiz-block').forEach(function(block) {
+          block.className = 'quiz-block';
+          var fb = block.querySelector('.quiz-feedback');
+          fb.textContent = '';
+          fb.className = 'quiz-feedback';
+          block.querySelectorAll('.quiz-opt').forEach(function(b) {
+            b.disabled = false;
+            b.classList.remove('correct', 'wrong');
+            b.style.opacity = '';
+          });
+        });
+        document.getElementById('score-bar').style.display = 'none';
+      }
+    </script>
+
+    <!-- EXAM TRAPS -->
+    <h2>Common Exam Traps</h2>
+    <p>These are the mistakes the exam is designed to catch:</p>
+
+    <ul class="trap-list">
+      <li>Using a SQL Warehouse for ETL — it is optimised for queries, not transformations or Spark jobs.</li>
+      <li>Using a Cluster for BI dashboards — adds unnecessary overhead and misses the purpose of SQL Warehouses.</li>
+      <li>Assuming serverless works in all enterprise setups — private networking and storage restrictions can block it.</li>
+      <li>Forgetting that serverless can cost <em>more</em> for sustained heavy workloads — it is not always the cheapest option.</li>
+      <li>Confusing All-purpose and Job clusters — if the scenario says "scheduled" or "automated", prefer a Job Cluster.</li>
+    </ul>
+
+    <div class="callout orange">
+      <div class="callout-title">⚡ Quick Memory Trick</div>
+      <strong>People run SQL → SQL Warehouse.</strong> Code runs Spark → Cluster. Nobody manages infra → Serverless. Three sentences, three compute types covered.
+    </div>
+
+  </article>
+
+  <!-- COFFEE -->
+  <footer class="coffee-bar">
+    All articles are completely free — but a £3 coffee keeps me publishing!<br>
+    <a href="https://ko-fi.com/nidhin">☕ Buy me a coffee</a>
+  </footer>
+
+</body>
+</html>
