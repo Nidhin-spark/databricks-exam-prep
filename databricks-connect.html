@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Use Databricks Connect in a data engineering workflow — Databricks DE Associate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3250;
+      --text: #e8eaf6;
+      --muted: #7c82a8;
+      --accent: #ff3621;
+      --accent2: #00c7b1;
+      --accent3: #ffa500;
+      --heading-font: 'Georgia', serif;
+      --body-font: system-ui, -apple-system, sans-serif;
+      --code-font: 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 16px;
+      line-height: 1.75;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 2rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-right { display: flex; gap: 1rem; align-items: center; }
+    .nav-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      padding: 0.25rem 0.75rem;
+    }
+    .listen-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-family: var(--body-font);
+      color: var(--muted);
+      padding: 0.25rem 0.85rem;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      white-space: nowrap;
+    }
+    .listen-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .listen-btn.playing { border-color: var(--accent2); color: var(--accent2); background: rgba(0,199,177,0.08); }
+    .listen-btn .listen-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+    .listen-btn.playing .listen-dot {
+      animation: blink 1s ease infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* HERO */
+    .hero {
+      max-width: 780px;
+      margin: 4rem auto 0;
+      padding: 0 2rem;
+    }
+    .article-meta {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 0.2rem 0.6rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .tag.live { background: rgba(0,199,177,0.1); border-color: var(--accent2); color: var(--accent2); }
+    .tag.section { background: rgba(255,54,33,0.08); border-color: var(--accent); color: var(--accent); }
+
+    h1 {
+      font-family: var(--heading-font);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      line-height: 1.2;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2rem;
+    }
+
+    /* ARTICLE BODY */
+    .article-body {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+    }
+
+    h2 {
+      font-family: var(--heading-font);
+      font-size: 1.45rem;
+      color: #fff;
+      margin: 2.8rem 0 0.9rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 2rem 0 0.6rem;
+    }
+    p { margin-bottom: 1rem; color: #c8cce8; }
+
+    /* CALLOUT BOXES */
+    .callout {
+      border-radius: 8px;
+      padding: 1.2rem 1.4rem;
+      margin: 1.5rem 0;
+      border-left: 4px solid;
+      font-size: 0.95rem;
+    }
+    .callout.blue  { background: rgba(99,131,255,0.07); border-color: #6383ff; }
+    .callout.green { background: rgba(0,199,177,0.07);  border-color: var(--accent2); }
+    .callout.orange{ background: rgba(255,165,0,0.07);  border-color: var(--accent3); }
+    .callout.red   { background: rgba(255,54,33,0.07);  border-color: var(--accent); }
+    .callout-title {
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.5rem;
+    }
+    .callout.blue   .callout-title { color: #6383ff; }
+    .callout.green  .callout-title { color: var(--accent2); }
+    .callout.orange .callout-title { color: var(--accent3); }
+    .callout.red    .callout-title { color: var(--accent); }
+
+    /* CONCEPT CARDS */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .concept-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.3rem;
+      transition: border-color 0.2s;
+    }
+    .concept-card:hover { border-color: var(--muted); }
+    .concept-card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .concept-card h4 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .concept-card p  { font-size: 0.85rem; color: var(--muted); margin: 0; }
+    .concept-card .keyword {
+      display: inline-block;
+      margin-top: 0.75rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      color: var(--accent2);
+      padding: 0.2rem 0.5rem;
+      font-family: var(--code-font);
+    }
+
+    /* CODE BLOCK */
+    .code-block {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.2rem 1.4rem;
+      margin: 1.2rem 0;
+      overflow-x: auto;
+      font-family: var(--code-font);
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+    .code-block .comment { color: #4a5568; }
+    .code-block .keyword { color: #c792ea; }
+    .code-block .string  { color: #a8ff78; }
+    .code-block .fn      { color: #82aaff; }
+    .code-block .var     { color: #e8eaf6; }
+    .code-block .label {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+      font-family: var(--body-font);
+    }
+
+    /* COMPARISON TABLE */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .compare-table thead tr { background: var(--surface2); }
+    .compare-table th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: #c8cce8;
+      vertical-align: top;
+    }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:nth-child(odd) td { background: rgba(255,255,255,0.015); }
+    .yes { color: var(--accent2); font-weight: 600; }
+    .no  { color: var(--accent);  font-weight: 600; }
+
+    /* FLOW DIAGRAM */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 1.5rem 0;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .flow-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      flex: 1;
+      min-width: 120px;
+    }
+    .flow-box.highlight { border-color: var(--accent2); color: var(--accent2); background: rgba(0,199,177,0.07); }
+    .flow-arrow { color: var(--muted); font-size: 1.1rem; flex-shrink: 0; }
+
+    /* REAL WORLD */
+    .realworld {
+      background: linear-gradient(135deg, rgba(255,165,0,0.06), rgba(255,54,33,0.04));
+      border: 1px solid rgba(255,165,0,0.2);
+      border-radius: 10px;
+      padding: 1.4rem;
+      margin: 2rem 0;
+    }
+    .realworld-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent3);
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+
+    /* TRAP LIST */
+    .trap-list { list-style: none; padding: 0; margin: 0.75rem 0; }
+    .trap-list li {
+      padding: 0.5rem 0 0.5rem 1.6rem;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      font-size: 0.93rem;
+      color: #c8cce8;
+    }
+    .trap-list li:last-child { border-bottom: none; }
+    .trap-list li::before { content: "✗"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+    /* PROGRESS BAR */
+    .progress-bar-wrap {
+      background: var(--surface2);
+      border-radius: 99px;
+      height: 4px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+      border-radius: 99px;
+      width: 15%;
+    }
+
+    /* INLINE CODE */
+    code {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.1em 0.4em;
+      font-family: var(--code-font);
+      font-size: 0.88em;
+      color: #a8c0ff;
+    }
+
+    /* COFFEE */
+    .coffee-bar {
+      text-align: center;
+      padding: 2.5rem 2rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .coffee-bar a { color: var(--accent2); text-decoration: none; font-weight: 600; }
+    .coffee-bar a:hover { text-decoration: underline; }
+
+    /* QUIZ */
+    .quiz-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin: 1rem 0; transition: border-color 0.3s; }
+    .quiz-block.answered-correct { border-color: #00c7b1; }
+    .quiz-block.answered-wrong   { border-color: var(--accent); }
+    .quiz-num { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 0.15rem 0.5rem; margin-right: 0.5rem; letter-spacing: 0.05em; vertical-align: middle; }
+    .quiz-q { font-weight: 600; color: var(--text); margin-bottom: 1rem; font-size: 0.97rem; line-height: 1.5; }
+    .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 500px) { .quiz-options { grid-template-columns: 1fr; } }
+    .quiz-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer; text-align: left; transition: background 0.2s, border-color 0.2s, color 0.2s; font-family: var(--body-font); line-height: 1.4; }
+    .quiz-opt:hover:not(:disabled) { background: #2a2f4a; border-color: var(--muted); }
+    .quiz-opt.correct { background: rgba(0,199,177,0.15); border-color: var(--accent2); color: var(--accent2); font-weight: 600; }
+    .quiz-opt.wrong   { background: rgba(255,54,33,0.12);  border-color: var(--accent);  color: var(--accent); }
+    .quiz-opt:disabled { cursor: default; }
+    .quiz-opt.correct:disabled { opacity: 1; }
+    .quiz-feedback { margin-top: 0.9rem; font-size: 0.88rem; }
+    .quiz-feedback.show-correct { color: var(--accent2); padding: 0.6rem 0.9rem; background: rgba(0,199,177,0.07); border-radius: 6px; border-left: 3px solid var(--accent2); }
+    .quiz-feedback.show-wrong   { color: #ff8a7a;        padding: 0.6rem 0.9rem; background: rgba(255,54,33,0.07);  border-radius: 6px; border-left: 3px solid var(--accent); }
+    .quiz-score-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    #score-text { font-weight: 600; font-size: 1rem; color: var(--text); }
+    .quiz-reset { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--muted); padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; font-family: var(--body-font); transition: border-color 0.2s, color 0.2s; }
+    .quiz-reset:hover { border-color: var(--muted); color: var(--text); }
+
+    @media (max-width: 600px) {
+      nav { padding: 1rem; }
+      .hero, .article-body { padding-left: 1.2rem; padding-right: 1.2rem; }
+      h1 { font-size: 1.6rem; }
+      .flow { flex-direction: column; align-items: stretch; }
+      .flow-arrow { transform: rotate(90deg); text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-brand">Databricks <span>·</span> DE Associate</a>
+    <div class="nav-right">
+      <span class="nav-badge">Section 02 · Topic 1 of 5</span>
+      <button class="listen-btn" id="listenBtn" onclick="toggleListen()">
+        <span class="listen-dot"></span>
+        <span id="listenLabel">Listen</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="article-meta">
+      <span class="tag section">Section 02</span>
+      <span class="tag live">Live</span>
+      <span class="tag">Development and Ingestion</span>
+    </div>
+    <h1>Use Databricks Connect in a data engineering workflow</h1>
+    <p class="subtitle">Develop and test Spark code locally while running on remote Databricks clusters — without moving your IDE.</p>
+  </header>
+
+  <!-- BODY -->
+  <article class="article-body">
+
+    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+
+    <!-- CORE CONCEPT -->
+    <h2>The Core Idea</h2>
+    <p>Databricks Connect is a client library that lets you run Spark code from your local machine — your laptop, VS Code, PyCharm, wherever you work — while the actual computation happens on a remote Databricks cluster.</p>
+    <p>Think of it as a bridge: your code stays local, your data and compute stay in Databricks. You get the full developer experience of a local IDE with the full power of a cloud cluster.</p>
+
+    <div class="callout blue">
+      <div class="callout-title">Exam Mindset</div>
+      Databricks Connect questions are about <em>where code runs vs. where compute runs</em>. Code is written and submitted locally. Spark execution happens remotely on the cluster. Always keep these two sides separate in your head.
+    </div>
+
+    <!-- WHAT IT REPLACES -->
+    <h2>The Problem It Solves</h2>
+    <p>Before Databricks Connect, your only option for writing and testing Spark code was to work directly inside a Databricks notebook. That meant:</p>
+
+    <ul class="trap-list" style="margin-bottom:1rem;">
+      <li style="color:#c8cce8;">No local IDE — you had to use the notebook interface for everything</li>
+      <li style="color:#c8cce8;">No local debugging tools — breakpoints, watch windows, and step-through didn't work</li>
+      <li style="color:#c8cce8;">No version control integration in your editor of choice</li>
+      <li style="color:#c8cce8;">Every code change required uploading to Databricks to test</li>
+    </ul>
+
+    <p>Databricks Connect solves this by letting you keep your existing development workflow — local IDE, local Git, local debugger — while still running Spark on a real cluster.</p>
+
+    <div class="realworld">
+      <div class="realworld-label">🏗️ Real-world note</div>
+      <p style="margin:0; font-size:0.93rem;">In enterprise data engineering teams, developers often have strict tooling requirements — VS Code with specific extensions, PyCharm Professional, or internal code review tools. Databricks Connect means teams don't have to abandon those tools to write Spark code. You write in your editor, it runs in Databricks.</p>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <h2>How It Works</h2>
+    <p>The flow is straightforward. Your local Python environment uses the Databricks Connect client to submit Spark operations to a remote cluster. Results come back to your local session.</p>
+
+    <div class="flow">
+      <div class="flow-box">💻 Local IDE<br><small style="color:var(--muted);font-weight:400;">Write code</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box highlight">Databricks Connect<br><small style="font-weight:400;">Client library</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">☁️ Remote Cluster<br><small style="color:var(--muted);font-weight:400;">Spark execution</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">📊 Results<br><small style="color:var(--muted);font-weight:400;">Returned locally</small></div>
+    </div>
+
+    <h3>What runs locally vs. remotely</h3>
+    <p>This distinction is important — the exam may test it directly:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Runs Locally</th>
+          <th>Runs Remotely (on cluster)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Your Python/Scala code</td>
+          <td>All Spark execution (DataFrame operations, transformations)</td>
+        </tr>
+        <tr>
+          <td>IDE, debugger, linter</td>
+          <td>Spark driver and worker nodes</td>
+        </tr>
+        <tr>
+          <td>DataFrame definitions and logic</td>
+          <td>Actual data processing and shuffles</td>
+        </tr>
+        <tr>
+          <td>Unit test runner</td>
+          <td>Reading and writing to cloud storage / Delta tables</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- SETUP -->
+    <h2>Setting It Up</h2>
+    <p>Databricks Connect (v2, for DBR 13+) is installed as a Python package. The setup replaces the standard <code>pyspark</code> package in your local environment:</p>
+
+    <div class="code-block">
+      <span class="label">Terminal — install</span>
+      <span class="comment"># Install Databricks Connect (v2 for DBR 13+)</span><br>
+      pip install databricks-connect==13.3.*<br><br>
+      <span class="comment"># Configure with your workspace</span><br>
+      databricks configure
+    </div>
+
+    <p>Once configured, you connect to a cluster using a <code>DatabricksSession</code> — the drop-in replacement for the standard <code>SparkSession</code>:</p>
+
+    <div class="code-block">
+      <span class="label">Python — connecting</span>
+      <span class="keyword">from</span> <span class="var">databricks.connect</span> <span class="keyword">import</span> <span class="fn">DatabricksSession</span><br><br>
+      <span class="comment"># Replaces SparkSession.builder.getOrCreate()</span><br>
+      <span class="var">spark</span> = <span class="fn">DatabricksSession</span>.<span class="fn">builder</span>.<span class="fn">getOrCreate</span>()<br><br>
+      <span class="comment"># Now use spark exactly as you would in a notebook</span><br>
+      <span class="var">df</span> = <span class="var">spark</span>.<span class="fn">read</span>.<span class="fn">table</span>(<span class="string">"catalog.schema.my_table"</span>)<br>
+      <span class="var">df</span>.<span class="fn">show</span>()
+    </div>
+
+    <div class="callout green">
+      <div class="callout-title">Key exam point</div>
+      <code>DatabricksSession</code> is the Databricks Connect equivalent of <code>SparkSession</code>. It is a drop-in replacement — the rest of your PySpark code is unchanged. This is intentional by design.
+    </div>
+
+    <!-- VERSION NOTE -->
+    <h3>Databricks Connect v1 vs v2</h3>
+    <p>There are two major versions and the exam may reference both. Know the difference:</p>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th></th>
+          <th>v1 (Legacy)</th>
+          <th>v2 (Current)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>DBR Support</strong></td>
+          <td>DBR 5.x – 12.x</td>
+          <td>DBR 13.0+ (including Serverless)</td>
+        </tr>
+        <tr>
+          <td><strong>Install</strong></td>
+          <td><code>databricks-connect</code> (old)</td>
+          <td><code>databricks-connect==13.x.*</code></td>
+        </tr>
+        <tr>
+          <td><strong>Session object</strong></td>
+          <td><code>SparkSession</code></td>
+          <td><code>DatabricksSession</code></td>
+        </tr>
+        <tr>
+          <td><strong>Unity Catalog</strong></td>
+          <td><span class="no">Limited</span></td>
+          <td><span class="yes">Full support</span></td>
+        </tr>
+        <tr>
+          <td><strong>Serverless compute</strong></td>
+          <td><span class="no">No</span></td>
+          <td><span class="yes">Yes</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- USE CASES -->
+    <h2>When to Use Databricks Connect</h2>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-card-icon">🧪</div>
+        <h4>Local Testing</h4>
+        <p>Write and test Spark transformations in your IDE with real cluster compute before deploying to production.</p>
+        <span class="keyword">dev workflow</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🐛</div>
+        <h4>Debugging</h4>
+        <p>Use your IDE's debugger — breakpoints, variable inspection, step-through — on real Spark code.</p>
+        <span class="keyword">local debugger</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🔁</div>
+        <h4>CI/CD Pipelines</h4>
+        <p>Run Spark-based unit tests in a CI pipeline without needing a full Databricks notebook environment.</p>
+        <span class="keyword">automated tests</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">📦</div>
+        <h4>IDE Integration</h4>
+        <p>Work in VS Code, PyCharm, or any Python-capable editor with full autocomplete and code navigation.</p>
+        <span class="keyword">vs code / pycharm</span>
+      </div>
+    </div>
+
+    <!-- LIMITATIONS -->
+    <h3>What Databricks Connect Cannot Do</h3>
+    <p>These limitations are exam-worthy — especially the first one:</p>
+
+    <ul class="trap-list">
+      <li>Cannot run <strong>Spark Structured Streaming</strong> locally via Databricks Connect</li>
+      <li>Cannot use <strong>SparkContext</strong> directly (use <code>DatabricksSession</code> instead)</li>
+      <li>Cannot run <strong>%magic commands</strong> (these are notebook-only features)</li>
+      <li>Cannot use <strong>display()</strong> or <strong>dbutils.fs</strong> in the same way as notebooks</li>
+      <li>Cannot connect to a <strong>terminated cluster</strong> — the cluster must be running</li>
+    </ul>
+
+    <div class="callout red">
+      <div class="callout-title">Exam trap</div>
+      If the exam scenario mentions <strong>Structured Streaming</strong> and asks which tool to use for local development — Databricks Connect is <em>not</em> the answer. Streaming requires the notebook or a running job context.
+    </div>
+
+    <!-- DATABRICKS CONNECT VS NOTEBOOKS -->
+    <h2>Databricks Connect vs. Working in Notebooks</h2>
+
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Best Approach</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Developing reusable PySpark modules in VS Code</td>
+          <td><span class="yes">Databricks Connect</span></td>
+        </tr>
+        <tr>
+          <td>Interactive data exploration with display()</td>
+          <td>Notebook</td>
+        </tr>
+        <tr>
+          <td>Running unit tests in a CI/CD pipeline</td>
+          <td><span class="yes">Databricks Connect</span></td>
+        </tr>
+        <tr>
+          <td>Structured Streaming development</td>
+          <td>Notebook or Job</td>
+        </tr>
+        <tr>
+          <td>Using %sql, %md, or other magic commands</td>
+          <td>Notebook</td>
+        </tr>
+        <tr>
+          <td>Debugging with breakpoints and step-through</td>
+          <td><span class="yes">Databricks Connect</span></td>
+        </tr>
+        <tr>
+          <td>Collaborating with non-technical stakeholders</td>
+          <td>Notebook</td>
+        </tr>
+        <tr>
+          <td>Building production-grade ETL modules with version control</td>
+          <td><span class="yes">Databricks Connect</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- EXAM QUESTIONS -->
+    <h2>Exam-Style Practice Questions</h2>
+    <p style="font-size:0.9rem; color:var(--muted); margin-bottom:1.5rem;">Select an answer — green means correct, red means wrong.</p>
+
+    <div class="quiz-block" id="q1">
+      <div class="quiz-q"><span class="quiz-num">Q1</span> A data engineer wants to write PySpark transformations in VS Code and debug them using breakpoints, while running on a Databricks cluster. What should they use?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Databricks Notebooks</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="true">Databricks Connect</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Databricks Jobs</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Databricks SQL Warehouse</button>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q2">
+      <div class="quiz-q"><span class="quiz-num">Q2</span> Which object replaces <code>SparkSession</code> when using Databricks Connect v2?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q2" data-correct="false">RemoteSparkSession</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">ClusterSession</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="true">DatabricksSession</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">ConnectSession</button>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q3">
+      <div class="quiz-q"><span class="quiz-num">Q3</span> A team wants to run Spark-based unit tests in their CI/CD pipeline without using Databricks notebooks. What is the correct approach?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q3" data-correct="false">Use a SQL Warehouse</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="true">Use Databricks Connect with a remote cluster</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">Use Databricks Workflows only</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">Install a local Spark instance</button>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q4">
+      <div class="quiz-q"><span class="quiz-num">Q4</span> A data engineer is building a Structured Streaming pipeline. Can they use Databricks Connect to develop and test it locally?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Yes — Databricks Connect supports all Spark features</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Yes — but only with Databricks Connect v2</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="true">No — Structured Streaming is not supported by Databricks Connect</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Yes — streaming works if the cluster has DBR 13+</button>
+      </div>
+      <div class="quiz-feedback" id="q4-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q5">
+      <div class="quiz-q"><span class="quiz-num">Q5</span> Where does Spark execution actually happen when using Databricks Connect?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q5" data-correct="false">On the local machine running the IDE</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">In a local Docker container</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="true">On the remote Databricks cluster</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">In Databricks SQL Warehouse</button>
+      </div>
+      <div class="quiz-feedback" id="q5-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q6">
+      <div class="quiz-q"><span class="quiz-num">Q6</span> Which of the following is NOT possible with Databricks Connect?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Running PySpark DataFrame transformations from VS Code</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Using a local debugger with breakpoints on Spark code</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="true">Using %sql and %md magic commands from a local script</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Reading from a Unity Catalog Delta table via DatabricksSession</button>
+      </div>
+      <div class="quiz-feedback" id="q6-feedback"></div>
+    </div>
+
+    <div class="quiz-score-bar" id="score-bar" style="display:none;">
+      <span id="score-text"></span>
+      <button class="quiz-reset" onclick="resetQuiz()">↺ Try Again</button>
+    </div>
+
+    <!-- EXAM TRAPS -->
+    <h2>Common Exam Traps</h2>
+    <p>These are the mistakes the exam is designed to catch:</p>
+
+    <ul class="trap-list">
+      <li>Thinking Spark runs locally — it always runs on the remote cluster, even with Databricks Connect.</li>
+      <li>Using <code>SparkSession</code> instead of <code>DatabricksSession</code> — the v2 client requires the new session object.</li>
+      <li>Assuming Databricks Connect supports Structured Streaming — it does not.</li>
+      <li>Confusing Databricks Connect with Databricks CLI — Connect is for running Spark code, CLI is for managing workspace resources.</li>
+      <li>Forgetting the cluster must be running — Databricks Connect cannot start a terminated cluster automatically.</li>
+      <li>Thinking magic commands like <code>%sql</code> or <code>dbutils.fs.ls()</code> work in a local script — they are notebook-only.</li>
+    </ul>
+
+    <div class="callout orange">
+      <div class="callout-title">⚡ Quick Memory Trick</div>
+      <strong>Connect = Code local, Compute remote.</strong> Your fingers type in VS Code. The cluster does the work. Results come back to you. That's the whole model.
+    </div>
+
+  </article>
+
+  <!-- COFFEE -->
+  <footer class="coffee-bar">
+    All articles are completely free — but a £3 coffee keeps me publishing!<br>
+    <a href="https://ko-fi.com/nidhin">☕ Buy me a coffee</a>
+  </footer>
+
+  <script>
+    var quizAnswered = {};
+    var quizExplanations = {
+      q1: 'Databricks Connect lets you write Spark code in any local IDE and run it on a remote Databricks cluster — including with full debugger support.',
+      q2: 'DatabricksSession is the v2 drop-in replacement for SparkSession. The rest of your PySpark code remains unchanged.',
+      q3: 'Databricks Connect is designed for exactly this — running Spark-based tests in CI/CD pipelines without needing a notebook environment.',
+      q4: 'Structured Streaming is a key limitation of Databricks Connect. Streaming pipelines must be developed and run in a notebook or deployed as a Job.',
+      q5: 'Spark execution always happens on the remote Databricks cluster. Databricks Connect only submits the operations — your local machine handles none of the computation.',
+      q6: 'Magic commands like %sql and %md are exclusive to the Databricks notebook interface. They cannot be used in local Python scripts, even with Databricks Connect.'
+    };
+    var quizTotal = Object.keys(quizExplanations).length;
+
+    document.querySelectorAll('.quiz-opt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var qId = btn.getAttribute('data-qid');
+        var isCorrect = btn.getAttribute('data-correct') === 'true';
+        if (quizAnswered[qId]) return;
+        quizAnswered[qId] = isCorrect ? 'correct' : 'wrong';
+
+        var block = document.getElementById(qId);
+        var feedback = document.getElementById(qId + '-feedback');
+        var allBtns = block.querySelectorAll('.quiz-opt');
+
+        allBtns.forEach(function(b) { b.disabled = true; });
+
+        if (isCorrect) {
+          btn.classList.add('correct');
+          block.classList.add('answered-correct');
+          feedback.textContent = '✓ Correct! ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-correct';
+        } else {
+          btn.classList.add('wrong');
+          block.classList.add('answered-wrong');
+          feedback.textContent = '✗ Not quite. ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-wrong';
+          allBtns.forEach(function(b) {
+            if (b.getAttribute('data-correct') === 'true') {
+              b.classList.add('correct');
+              b.style.opacity = '1';
+            }
+          });
+        }
+
+        if (Object.keys(quizAnswered).length === quizTotal) {
+          var correct = Object.values(quizAnswered).filter(function(v) { return v === 'correct'; }).length;
+          var pct = Math.round((correct / quizTotal) * 100);
+          var emoji = pct === 100 ? '🏆' : pct >= 67 ? '💪' : '📖';
+          document.getElementById('score-text').textContent = emoji + ' You scored ' + correct + ' / ' + quizTotal + ' (' + pct + '%)';
+          document.getElementById('score-bar').style.display = 'flex';
+        }
+      });
+    });
+
+    function resetQuiz() {
+      quizAnswered = {};
+      document.querySelectorAll('.quiz-block').forEach(function(block) {
+        block.className = 'quiz-block';
+        var fb = block.querySelector('.quiz-feedback');
+        fb.textContent = '';
+        fb.className = 'quiz-feedback';
+        block.querySelectorAll('.quiz-opt').forEach(function(b) {
+          b.disabled = false;
+          b.classList.remove('correct', 'wrong');
+          b.style.opacity = '';
+        });
+      });
+      document.getElementById('score-bar').style.display = 'none';
+    }
+  </script>
+
+  <script>
+    function getBritishFemaleVoice() {
+      const voices = speechSynthesis.getVoices();
+
+      // Priority order — most specific to most general
+      const preferred = [
+        v => v.name === 'Google UK English Female',
+        v => v.name.includes('Serena'),           // Apple British female
+        v => v.name.includes('Martha'),           // Apple British female
+        v => v.name.includes('Kate'),             // Microsoft British female
+        v => v.lang === 'en-GB' && v.name.toLowerCase().includes('female'),
+        v => v.lang === 'en-GB' && !v.name.toLowerCase().includes('male'),
+        v => v.lang === 'en-GB',
+      ];
+
+      for (const match of preferred) {
+        const found = voices.find(match);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function toggleListen() {
+      const btn = document.getElementById('listenBtn');
+      const label = document.getElementById('listenLabel');
+
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+        btn.classList.remove('playing');
+        label.textContent = 'Listen';
+        return;
+      }
+
+      const article = document.querySelector('article.article-body');
+      const text = article ? article.innerText : document.body.innerText;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.05;
+
+      // Voices may not be loaded yet — wait if needed
+      const trySpeak = () => {
+        const voice = getBritishFemaleVoice();
+        if (voice) utterance.voice = voice;
+        utterance.lang = 'en-GB';
+
+        utterance.onstart = () => {
+          btn.classList.add('playing');
+          label.textContent = 'Stop';
+        };
+        utterance.onend = () => {
+          btn.classList.remove('playing');
+          label.textContent = 'Listen';
+        };
+        utterance.onerror = () => {
+          btn.classList.remove('playing');
+          label.textContent = 'Listen';
+        };
+
+        speechSynthesis.speak(utterance);
+      };
+
+      // Chrome loads voices async — handle both cases
+      if (speechSynthesis.getVoices().length > 0) {
+        trySpeak();
+      } else {
+        speechSynthesis.onvoiceschanged = () => {
+          speechSynthesis.onvoiceschanged = null;
+          trySpeak();
+        };
+      }
+    }
+
+    window.addEventListener('beforeunload', () => speechSynthesis.cancel());
+  </script>
+
+</body>
+</html>
