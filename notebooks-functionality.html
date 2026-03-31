@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Determine the capabilities of the Notebooks functionality — Databricks DE Associate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3250;
+      --text: #e8eaf6; --muted: #7c82a8; --accent: #ff3621; --accent2: #00c7b1;
+      --accent3: #ffa500; --heading-font: 'Georgia', serif;
+      --body-font: system-ui, -apple-system, sans-serif; --code-font: 'Courier New', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--body-font); font-size: 16px; line-height: 1.75; }
+
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
+    .nav-brand { font-size: 0.85rem; font-weight: 600; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; text-transform: uppercase; }
+    .nav-brand span { color: var(--accent); }
+    .nav-right { display: flex; gap: 1rem; align-items: center; }
+    .nav-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; font-size: 0.75rem; color: var(--muted); padding: 0.25rem 0.75rem; }
+    .listen-btn { display: flex; align-items: center; gap: 0.4rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; font-size: 0.75rem; font-family: var(--body-font); color: var(--muted); padding: 0.25rem 0.85rem; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; white-space: nowrap; }
+    .listen-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .listen-btn.playing { border-color: var(--accent2); color: var(--accent2); background: rgba(0,199,177,0.08); }
+    .listen-btn .listen-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .listen-btn.playing .listen-dot { animation: blink 1s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+    .hero { max-width: 780px; margin: 4rem auto 0; padding: 0 2rem; }
+    .article-meta { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; color: var(--muted); padding: 0.2rem 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+    .tag.live { background: rgba(0,199,177,0.1); border-color: var(--accent2); color: var(--accent2); }
+    .tag.section { background: rgba(255,54,33,0.08); border-color: var(--accent); color: var(--accent); }
+    h1 { font-family: var(--heading-font); font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2; color: #fff; margin-bottom: 1rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 2rem; }
+
+    .article-body { max-width: 780px; margin: 0 auto; padding: 0 2rem 5rem; }
+    h2 { font-family: var(--heading-font); font-size: 1.45rem; color: #fff; margin: 2.8rem 0 0.9rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin: 2rem 0 0.6rem; }
+    p { margin-bottom: 1rem; color: #c8cce8; }
+
+    .callout { border-radius: 8px; padding: 1.2rem 1.4rem; margin: 1.5rem 0; border-left: 4px solid; font-size: 0.95rem; }
+    .callout.blue  { background: rgba(99,131,255,0.07); border-color: #6383ff; }
+    .callout.green { background: rgba(0,199,177,0.07);  border-color: var(--accent2); }
+    .callout.orange{ background: rgba(255,165,0,0.07);  border-color: var(--accent3); }
+    .callout.red   { background: rgba(255,54,33,0.07);  border-color: var(--accent); }
+    .callout-title { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; }
+    .callout.blue .callout-title   { color: #6383ff; }
+    .callout.green .callout-title  { color: var(--accent2); }
+    .callout.orange .callout-title { color: var(--accent3); }
+    .callout.red .callout-title    { color: var(--accent); }
+
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .concept-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.3rem; transition: border-color 0.2s; }
+    .concept-card:hover { border-color: var(--muted); }
+    .concept-card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .concept-card h4 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .concept-card p  { font-size: 0.85rem; color: var(--muted); margin: 0; }
+    .concept-card .keyword { display: inline-block; margin-top: 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; color: var(--accent2); padding: 0.2rem 0.5rem; font-family: var(--code-font); }
+
+    .code-block { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.4rem; margin: 1.2rem 0; overflow-x: auto; font-family: var(--code-font); font-size: 0.85rem; line-height: 1.7; }
+    .code-block .comment { color: #4a5568; }
+    .code-block .keyword { color: #c792ea; }
+    .code-block .string  { color: #a8ff78; }
+    .code-block .fn      { color: #82aaff; }
+    .code-block .label   { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.6rem; font-family: var(--body-font); }
+
+    .compare-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; border-radius: 8px; overflow: hidden; }
+    .compare-table thead tr { background: var(--surface2); }
+    .compare-table th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    .compare-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: #c8cce8; vertical-align: top; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:nth-child(odd) td { background: rgba(255,255,255,0.015); }
+
+    .magic-tag { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-family: var(--code-font); font-size: 0.82rem; color: var(--accent3); padding: 0.15rem 0.5rem; margin: 0.15rem; }
+
+    .realworld { background: linear-gradient(135deg, rgba(255,165,0,0.06), rgba(255,54,33,0.04)); border: 1px solid rgba(255,165,0,0.2); border-radius: 10px; padding: 1.4rem; margin: 2rem 0; }
+    .realworld-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent3); font-weight: 700; margin-bottom: 0.6rem; }
+
+    .trap-list { list-style: none; padding: 0; margin: 0.75rem 0; }
+    .trap-list li { padding: 0.5rem 0 0.5rem 1.6rem; border-bottom: 1px solid var(--border); position: relative; font-size: 0.93rem; color: #c8cce8; }
+    .trap-list li:last-child { border-bottom: none; }
+    .trap-list li::before { content: "✗"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+    .progress-bar-wrap { background: var(--surface2); border-radius: 99px; height: 4px; overflow: hidden; margin-bottom: 2rem; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 99px; width: 15%; }
+
+    code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.4em; font-family: var(--code-font); font-size: 0.88em; color: #a8c0ff; }
+
+    /* QUIZ */
+    .quiz-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin: 1rem 0; transition: border-color 0.3s; }
+    .quiz-block.answered-correct { border-color: #00c7b1; }
+    .quiz-block.answered-wrong   { border-color: var(--accent); }
+    .quiz-num { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 0.15rem 0.5rem; margin-right: 0.5rem; letter-spacing: 0.05em; vertical-align: middle; }
+    .quiz-q { font-weight: 600; color: var(--text); margin-bottom: 1rem; font-size: 0.97rem; line-height: 1.5; }
+    .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 500px) { .quiz-options { grid-template-columns: 1fr; } }
+    .quiz-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer; text-align: left; transition: background 0.2s, border-color 0.2s, color 0.2s; font-family: var(--body-font); line-height: 1.4; }
+    .quiz-opt:hover:not(:disabled) { background: #2a2f4a; border-color: var(--muted); }
+    .quiz-opt.correct { background: rgba(0,199,177,0.15); border-color: var(--accent2); color: var(--accent2); font-weight: 600; }
+    .quiz-opt.wrong   { background: rgba(255,54,33,0.12);  border-color: var(--accent);  color: var(--accent); }
+    .quiz-opt:disabled { cursor: default; }
+    .quiz-opt.correct:disabled { opacity: 1; }
+    .quiz-feedback { margin-top: 0.9rem; font-size: 0.88rem; }
+    .quiz-feedback.show-correct { color: var(--accent2); padding: 0.6rem 0.9rem; background: rgba(0,199,177,0.07); border-radius: 6px; border-left: 3px solid var(--accent2); }
+    .quiz-feedback.show-wrong   { color: #ff8a7a; padding: 0.6rem 0.9rem; background: rgba(255,54,33,0.07); border-radius: 6px; border-left: 3px solid var(--accent); }
+    .quiz-score-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    #score-text { font-weight: 600; font-size: 1rem; color: var(--text); }
+    .quiz-reset { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--muted); padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; font-family: var(--body-font); transition: border-color 0.2s, color 0.2s; }
+    .quiz-reset:hover { border-color: var(--muted); color: var(--text); }
+
+    .coffee-bar { text-align: center; padding: 2.5rem 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.88rem; }
+    .coffee-bar a { color: var(--accent2); text-decoration: none; font-weight: 600; }
+    .coffee-bar a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) { nav { padding: 1rem; } .hero, .article-body { padding-left: 1.2rem; padding-right: 1.2rem; } h1 { font-size: 1.6rem; } }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-brand">Databricks <span>·</span> DE Associate</a>
+    <div class="nav-right">
+      <span class="nav-badge">Section 02 · Topic 2 of 5</span>
+      <button class="listen-btn" id="listenBtn" onclick="toggleListen()">
+        <span class="listen-dot"></span>
+        <span id="listenLabel">Listen</span>
+      </button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="article-meta">
+      <span class="tag section">Section 02</span>
+      <span class="tag live">Live</span>
+      <span class="tag">Development and Ingestion</span>
+    </div>
+    <h1>Determine the capabilities of the Notebooks functionality</h1>
+    <p class="subtitle">Magic commands, widgets, revision history, and multi-language notebooks.</p>
+  </header>
+
+  <article class="article-body">
+
+    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+
+    <h2>The Core Idea</h2>
+    <p>Databricks Notebooks are the primary interactive environment for data engineers, scientists, and analysts working on the platform. They're far more capable than a standard Jupyter notebook — with built-in multi-language support, real-time collaboration, versioning, and a rich set of commands that control both the notebook and the cluster.</p>
+    <p>The exam tests whether you know what notebooks can do natively, which commands trigger which behaviours, and where notebooks fit (and don't fit) in a production workflow.</p>
+
+    <div class="callout blue">
+      <div class="callout-title">Exam Mindset</div>
+      Think of notebooks as having four capability layers: <strong>magic commands</strong> (language switching and utilities), <strong>widgets</strong> (parameterisation), <strong>versioning</strong> (history and Git), and <strong>collaboration</strong> (real-time co-editing). Questions will test all four.
+    </div>
+
+    <h2>Magic Commands</h2>
+    <p>Magic commands are prefixed with <code>%</code> and override the default language of the notebook cell. They are notebook-only — they cannot be used in Python scripts or via Databricks Connect.</p>
+
+    <h3>Language Magic Commands</h3>
+    <p>Every notebook has a default language set at creation time. Magic commands let you switch language per cell:</p>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-card-icon">🐍</div>
+        <h4>%python</h4>
+        <p>Run a cell as Python, even if the notebook default is SQL or Scala.</p>
+        <span class="keyword">PySpark / pandas</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🗄️</div>
+        <h4>%sql</h4>
+        <p>Run a cell as SQL. Results display as an interactive table automatically.</p>
+        <span class="keyword">Delta / SQL queries</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">⚡</div>
+        <h4>%scala</h4>
+        <p>Run a cell as Scala. Useful when working with Scala-native libraries.</p>
+        <span class="keyword">Scala Spark</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">☕</div>
+        <h4>%r</h4>
+        <p>Run a cell as R. Used for statistical analysis alongside Spark workloads.</p>
+        <span class="keyword">R / SparkR</span>
+      </div>
+    </div>
+
+    <h3>Utility Magic Commands</h3>
+    <p>Beyond language switching, these utility commands are just as important for the exam:</p>
+
+    <table class="compare-table">
+      <thead><tr><th>Command</th><th>What it does</th><th>Key exam point</th></tr></thead>
+      <tbody>
+        <tr><td><span class="magic-tag">%md</span></td><td>Renders the cell as Markdown — headings, bold, links, images</td><td>Documentation only — no code runs</td></tr>
+        <tr><td><span class="magic-tag">%sh</span></td><td>Runs shell commands on the driver node only</td><td>Does NOT run on worker nodes</td></tr>
+        <tr><td><span class="magic-tag">%fs</span></td><td>Shorthand for <code>dbutils.fs</code> — browse DBFS, copy, move, delete files</td><td>Equivalent to <code>dbutils.fs.ls()</code></td></tr>
+        <tr><td><span class="magic-tag">%run</span></td><td>Executes another notebook inline — shares the same session/scope</td><td>Variables from the called notebook are available in the caller</td></tr>
+        <tr><td><span class="magic-tag">%pip</span></td><td>Installs Python packages at the notebook session level</td><td>Restarts Python interpreter after install</td></tr>
+        <tr><td><span class="magic-tag">%lsmagic</span></td><td>Lists all available magic commands</td><td>Useful to know exists</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout red">
+      <div class="callout-title">Exam trap — %sh scope</div>
+      <code>%sh</code> runs on the <strong>driver node only</strong>. It does not distribute across workers. If an exam question mentions running shell commands across all nodes, <code>%sh</code> is not the answer.
+    </div>
+
+    <div class="callout green">
+      <div class="callout-title">Exam trap — %run scope sharing</div>
+      When you use <code>%run</code> to call another notebook, all variables, functions, and imports defined in that notebook become available in the current notebook's scope. This is a common exam question.
+    </div>
+
+    <h2>Widgets</h2>
+    <p>Widgets let you add interactive input controls (dropdowns, text boxes, sliders) to a notebook, making it parameterisable without changing the code. They're the primary way to pass parameters into a notebook when it's called from a Job or via <code>%run</code>.</p>
+
+    <div class="code-block">
+      <span class="label">Python — creating widgets</span>
+      <span class="comment"># Text input widget</span><br>
+      dbutils.widgets.<span class="fn">text</span>(<span class="string">"env"</span>, <span class="string">"dev"</span>, <span class="string">"Environment"</span>)<br><br>
+      <span class="comment"># Dropdown widget</span><br>
+      dbutils.widgets.<span class="fn">dropdown</span>(<span class="string">"region"</span>, <span class="string">"UK"</span>, [<span class="string">"UK"</span>, <span class="string">"US"</span>, <span class="string">"EU"</span>], <span class="string">"Region"</span>)<br><br>
+      <span class="comment"># Read a widget value</span><br>
+      env = dbutils.widgets.<span class="fn">get</span>(<span class="string">"env"</span>)<br><br>
+      <span class="comment"># Remove all widgets</span><br>
+      dbutils.widgets.<span class="fn">removeAll</span>()
+    </div>
+
+    <h3>Widget Types</h3>
+    <table class="compare-table">
+      <thead><tr><th>Widget</th><th>Use case</th></tr></thead>
+      <tbody>
+        <tr><td><code>text</code></td><td>Free-text input — environment name, file path, date string</td></tr>
+        <tr><td><code>dropdown</code></td><td>Select from a fixed list of options</td></tr>
+        <tr><td><code>combobox</code></td><td>Dropdown with a free-text fallback option</td></tr>
+        <tr><td><code>multiselect</code></td><td>Select multiple values from a list</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout orange">
+      <div class="callout-title">Key exam point — widgets in Jobs</div>
+      When a notebook is run as part of a Databricks Job, widget default values are overridden by the <strong>job parameters</strong> passed in at runtime. This is how notebooks are parameterised in production pipelines.
+    </div>
+
+    <h2>Revision History and Version Control</h2>
+    <p>Databricks Notebooks have two separate versioning systems — built-in revision history and Git integration. The exam may test the difference.</p>
+
+    <h3>Built-in Revision History</h3>
+    <p>Every save creates a revision snapshot automatically. You can browse, restore, or compare any previous version directly from the notebook UI — no Git required.</p>
+
+    <div class="callout green">
+      <div class="callout-title">Key capabilities</div>
+      View diffs between versions, restore to any previous state, and add comments to revisions. Revisions are stored per notebook and are separate from any Git history.
+    </div>
+
+    <h3>Git Integration</h3>
+    <p>Notebooks can be linked to a Git provider (GitHub, GitLab, Azure DevOps, Bitbucket). Once linked, you can commit, push, pull, branch, and merge directly from the Databricks UI — or via the Repos feature.</p>
+
+    <table class="compare-table">
+      <thead><tr><th></th><th>Revision History</th><th>Git Integration</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Setup required</strong></td><td>None — always on</td><td>Git provider + Repos</td></tr>
+        <tr><td><strong>Scope</strong></td><td>Single notebook</td><td>Full repository</td></tr>
+        <tr><td><strong>Collaboration</strong></td><td>View only</td><td>Branch, PR, merge</td></tr>
+        <tr><td><strong>CI/CD</strong></td><td>No</td><td>Yes</td></tr>
+        <tr><td><strong>Best for</strong></td><td>Quick rollback during development</td><td>Production deployment workflows</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Multi-Language Notebooks</h2>
+    <p>A single Databricks Notebook can contain cells written in Python, SQL, Scala, and R simultaneously. Each cell runs in the same Spark session, which means data created in one language is accessible in another via <strong>temporary views</strong>.</p>
+
+    <div class="code-block">
+      <span class="label">Python cell — create a temp view</span>
+      df = spark.read.<span class="fn">table</span>(<span class="string">"catalog.schema.sales"</span>)<br>
+      df.<span class="fn">createOrReplaceTempView</span>(<span class="string">"sales_view"</span>)
+    </div>
+
+    <div class="code-block">
+      <span class="label">SQL cell (same notebook) — query the view</span>
+      <span class="magic-tag" style="margin:0 0 0.5rem;display:inline-block;">%sql</span><br>
+      <span class="keyword">SELECT</span> region, <span class="fn">SUM</span>(revenue) <span class="keyword">AS</span> total<br>
+      <span class="keyword">FROM</span> sales_view<br>
+      <span class="keyword">GROUP BY</span> region
+    </div>
+
+    <div class="callout blue">
+      <div class="callout-title">Exam key point — sharing data between languages</div>
+      The correct way to pass data between language cells in a notebook is via a <strong>temporary view</strong>. Create it in Python with <code>createOrReplaceTempView()</code>, then query it with <code>%sql</code>. This is a direct exam question.
+    </div>
+
+    <h2>Real-Time Collaboration</h2>
+    <p>Multiple users can edit the same notebook simultaneously — similar to Google Docs. Co-presence cursors show who is editing which cell. Comments can be added to individual cells, and notifications can be sent to collaborators.</p>
+
+    <div class="realworld">
+      <div class="realworld-label">🏗️ Real-world note</div>
+      <p style="margin:0;font-size:0.93rem;">In practice, notebooks are great for exploration and prototyping but production pipelines should move to modular Python files (via Databricks Connect or Repos) for proper version control, testing, and CI/CD. The exam recognises both use cases — notebooks for interactive work, Jobs + Git for production.</p>
+    </div>
+
+    <h2>Exam-Style Practice Questions</h2>
+    <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1.5rem;">Select an answer — green means correct, red means wrong.</p>
+
+    <div class="quiz-block" id="q1">
+      <div class="quiz-q"><span class="quiz-num">Q1</span> A data engineer runs <code>%sh ls /tmp</code> in a Databricks notebook. Where does this command execute?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q1" data-correct="false">On all worker nodes</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="true">On the driver node only</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">On the local machine</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">On a randomly selected worker</button>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q2">
+      <div class="quiz-q"><span class="quiz-num">Q2</span> A Python notebook cell creates a DataFrame and calls <code>createOrReplaceTempView("my_view")</code>. How can the next cell query this data using SQL?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q2" data-correct="false">Use <code>%run</code> to import the DataFrame</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="true">Use <code>%sql SELECT * FROM my_view</code></button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">Save to Delta first, then query</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">SQL cannot access Python DataFrames</button>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q3">
+      <div class="quiz-q"><span class="quiz-num">Q3</span> Notebook A uses <code>%run ./NotebookB</code>. A variable <code>result</code> is defined in Notebook B. What happens?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q3" data-correct="false"><code>result</code> is not accessible in Notebook A</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="true"><code>result</code> is available in Notebook A's scope</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">Notebook B runs in an isolated session</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false"><code>%run</code> only imports functions, not variables</button>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q4">
+      <div class="quiz-q"><span class="quiz-num">Q4</span> A notebook is triggered as a Databricks Job with a parameter <code>env=prod</code>. The notebook has a widget with default value <code>dev</code>. What value does <code>dbutils.widgets.get("env")</code> return?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q4" data-correct="false">dev — the widget default always takes precedence</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="true">prod — job parameters override widget defaults</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">An error — parameters and widgets conflict</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">None — widgets don't work in Jobs</button>
+      </div>
+      <div class="quiz-feedback" id="q4-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q5">
+      <div class="quiz-q"><span class="quiz-num">Q5</span> What is the key difference between Databricks Notebook revision history and Git integration?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q5" data-correct="false">Revision history supports branching; Git does not</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">Git only works with Python notebooks</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="true">Revision history is automatic and notebook-scoped; Git supports full repo workflows with branching and CI/CD</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">They are functionally identical</button>
+      </div>
+      <div class="quiz-feedback" id="q5-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q6">
+      <div class="quiz-q"><span class="quiz-num">Q6</span> Which magic command is the shorthand equivalent of <code>dbutils.fs.ls()</code>?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q6" data-correct="false">%sh</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">%run</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="true">%fs</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">%pip</button>
+      </div>
+      <div class="quiz-feedback" id="q6-feedback"></div>
+    </div>
+
+    <div class="quiz-score-bar" id="score-bar" style="display:none;">
+      <span id="score-text"></span>
+      <button class="quiz-reset" onclick="resetQuiz()">↺ Try Again</button>
+    </div>
+
+    <h2>Common Exam Traps</h2>
+    <p>These are the mistakes the exam is designed to catch:</p>
+    <ul class="trap-list">
+      <li><code>%sh</code> runs on the driver only — not distributed across workers.</li>
+      <li><code>%run</code> shares scope — variables and functions from the called notebook are available in the caller.</li>
+      <li>Widget defaults are overridden by Job parameters at runtime — the default is just a fallback for interactive use.</li>
+      <li>Revision history and Git are separate systems — revision history needs no setup, Git requires Repos configuration.</li>
+      <li>Magic commands cannot be used in Python scripts or Databricks Connect — they are notebook-only.</li>
+      <li>Data is shared between language cells via temporary views, not by passing DataFrames directly.</li>
+    </ul>
+
+    <div class="callout orange">
+      <div class="callout-title">⚡ Quick Memory Trick</div>
+      <strong>%sh = Shell on Driver. %fs = File System. %run = Run and Share Scope. %md = Markdown Docs.</strong> Four commands, four distinct jobs — know them all.
+    </div>
+
+  </article>
+
+  <footer class="coffee-bar">
+    All articles are completely free — but a £3 coffee keeps me publishing!<br>
+    <a href="https://ko-fi.com/nidhin">☕ Buy me a coffee</a>
+  </footer>
+
+  <script>
+    var quizAnswered = {};
+    var quizExplanations = {
+      q1: '%sh always executes on the driver node only. It does not distribute commands across worker nodes — a common exam trap.',
+      q2: 'createOrReplaceTempView() registers the DataFrame as a temp view accessible from any language cell in the same session. %sql can then query it by name.',
+      q3: '%run executes the notebook inline and shares the full session scope. All variables, functions, and imports from Notebook B are available in Notebook A after %run.',
+      q4: 'Job parameters override widget defaults at runtime. The widget default value of "dev" is only used when running the notebook interactively without a parameter being passed.',
+      q5: 'Revision history is automatic, requires no setup, and is scoped to a single notebook. Git integration supports full repository workflows including branching, pull requests, and CI/CD pipelines.',
+      q6: '%fs is the magic command shorthand for dbutils.fs — it lets you browse DBFS, list, copy, and move files without writing Python.'
+    };
+    var quizTotal = Object.keys(quizExplanations).length;
+
+    document.querySelectorAll('.quiz-opt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var qId = btn.getAttribute('data-qid');
+        var isCorrect = btn.getAttribute('data-correct') === 'true';
+        if (quizAnswered[qId]) return;
+        quizAnswered[qId] = isCorrect ? 'correct' : 'wrong';
+        var block = document.getElementById(qId);
+        var feedback = document.getElementById(qId + '-feedback');
+        var allBtns = block.querySelectorAll('.quiz-opt');
+        allBtns.forEach(function(b) { b.disabled = true; });
+        if (isCorrect) {
+          btn.classList.add('correct'); block.classList.add('answered-correct');
+          feedback.textContent = '✓ Correct! ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-correct';
+        } else {
+          btn.classList.add('wrong'); block.classList.add('answered-wrong');
+          feedback.textContent = '✗ Not quite. ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-wrong';
+          allBtns.forEach(function(b) { if (b.getAttribute('data-correct') === 'true') { b.classList.add('correct'); b.style.opacity = '1'; } });
+        }
+        if (Object.keys(quizAnswered).length === quizTotal) {
+          var correct = Object.values(quizAnswered).filter(function(v){return v==='correct';}).length;
+          var pct = Math.round((correct/quizTotal)*100);
+          var emoji = pct===100?'🏆':pct>=67?'💪':'📖';
+          document.getElementById('score-text').textContent = emoji+' You scored '+correct+' / '+quizTotal+' ('+pct+'%)';
+          document.getElementById('score-bar').style.display = 'flex';
+        }
+      });
+    });
+
+    function resetQuiz() {
+      quizAnswered = {};
+      document.querySelectorAll('.quiz-block').forEach(function(block) {
+        block.className = 'quiz-block';
+        var fb = block.querySelector('.quiz-feedback'); fb.textContent=''; fb.className='quiz-feedback';
+        block.querySelectorAll('.quiz-opt').forEach(function(b){b.disabled=false;b.classList.remove('correct','wrong');b.style.opacity='';});
+      });
+      document.getElementById('score-bar').style.display = 'none';
+    }
+
+    // ── LISTEN (chunked — fixes Chrome silent-stop bug) ──
+    var listenChunks=[],listenActive=false;
+    function getBritishFemaleVoice(){var voices=speechSynthesis.getVoices();var p=[function(v){return v.name==='Google UK English Female';},function(v){return v.name.indexOf('Serena')>-1;},function(v){return v.name.indexOf('Martha')>-1;},function(v){return v.name.indexOf('Kate')>-1;},function(v){return v.lang==='en-GB'&&v.name.toLowerCase().indexOf('female')>-1;},function(v){return v.lang==='en-GB'&&v.name.toLowerCase().indexOf('male')===-1;},function(v){return v.lang==='en-GB';}];for(var i=0;i<p.length;i++){var f=voices.filter(p[i])[0];if(f)return f;}return null;}
+    function speakChunk(index){if(!listenActive||index>=listenChunks.length){stopListen();return;}var utt=new SpeechSynthesisUtterance(listenChunks[index]);utt.rate=0.93;utt.pitch=1.05;utt.lang='en-GB';var voice=getBritishFemaleVoice();if(voice)utt.voice=voice;utt.onend=function(){if(listenActive)speakChunk(index+1);};utt.onerror=function(e){if(e.error!=='interrupted')stopListen();};speechSynthesis.speak(utt);}
+    function startListen(){var article=document.querySelector('article.article-body');var rawText=article?article.innerText:document.body.innerText;var sentences=rawText.match(/[^.!?\n]+[.!?\n]*/g)||[rawText];listenChunks=[];var chunk='';for(var i=0;i<sentences.length;i++){chunk+=sentences[i];if(chunk.length>=180||i===sentences.length-1){if(chunk.trim())listenChunks.push(chunk.trim());chunk='';}}listenActive=true;document.getElementById('listenBtn').classList.add('playing');document.getElementById('listenLabel').textContent='Stop';var doSpeak=function(){speakChunk(0);};if(speechSynthesis.getVoices().length>0){doSpeak();}else{speechSynthesis.onvoiceschanged=function(){speechSynthesis.onvoiceschanged=null;doSpeak();};}}
+    function stopListen(){listenActive=false;speechSynthesis.cancel();var btn=document.getElementById('listenBtn');var label=document.getElementById('listenLabel');if(btn)btn.classList.remove('playing');if(label)label.textContent='Listen';}
+    function toggleListen(){if(listenActive){stopListen();}else{startListen();}}
+    window.addEventListener('beforeunload',function(){speechSynthesis.cancel();});
+  </script>
+
+</body>
+</html>

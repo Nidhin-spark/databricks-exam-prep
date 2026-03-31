@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classify valid Auto Loader sources and use cases — Databricks DE Associate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3250;
+      --text: #e8eaf6; --muted: #7c82a8; --accent: #ff3621; --accent2: #00c7b1;
+      --accent3: #ffa500; --heading-font: 'Georgia', serif;
+      --body-font: system-ui, -apple-system, sans-serif; --code-font: 'Courier New', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--body-font); font-size: 16px; line-height: 1.75; }
+
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
+    .nav-brand { font-size: 0.85rem; font-weight: 600; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; text-transform: uppercase; }
+    .nav-brand span { color: var(--accent); }
+    .nav-right { display: flex; gap: 1rem; align-items: center; }
+    .nav-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; font-size: 0.75rem; color: var(--muted); padding: 0.25rem 0.75rem; }
+    .listen-btn { display: flex; align-items: center; gap: 0.4rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; font-size: 0.75rem; font-family: var(--body-font); color: var(--muted); padding: 0.25rem 0.85rem; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; white-space: nowrap; }
+    .listen-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .listen-btn.playing { border-color: var(--accent2); color: var(--accent2); background: rgba(0,199,177,0.08); }
+    .listen-btn .listen-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .listen-btn.playing .listen-dot { animation: blink 1s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+    .hero { max-width: 780px; margin: 4rem auto 0; padding: 0 2rem; }
+    .article-meta { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; color: var(--muted); padding: 0.2rem 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+    .tag.live { background: rgba(0,199,177,0.1); border-color: var(--accent2); color: var(--accent2); }
+    .tag.section { background: rgba(255,54,33,0.08); border-color: var(--accent); color: var(--accent); }
+    h1 { font-family: var(--heading-font); font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2; color: #fff; margin-bottom: 1rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 2rem; }
+
+    .article-body { max-width: 780px; margin: 0 auto; padding: 0 2rem 5rem; }
+    h2 { font-family: var(--heading-font); font-size: 1.45rem; color: #fff; margin: 2.8rem 0 0.9rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin: 2rem 0 0.6rem; }
+    p { margin-bottom: 1rem; color: #c8cce8; }
+
+    .callout { border-radius: 8px; padding: 1.2rem 1.4rem; margin: 1.5rem 0; border-left: 4px solid; font-size: 0.95rem; }
+    .callout.blue  { background: rgba(99,131,255,0.07); border-color: #6383ff; }
+    .callout.green { background: rgba(0,199,177,0.07);  border-color: var(--accent2); }
+    .callout.orange{ background: rgba(255,165,0,0.07);  border-color: var(--accent3); }
+    .callout.red   { background: rgba(255,54,33,0.07);  border-color: var(--accent); }
+    .callout-title { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; }
+    .callout.blue .callout-title   { color: #6383ff; }
+    .callout.green .callout-title  { color: var(--accent2); }
+    .callout.orange .callout-title { color: var(--accent3); }
+    .callout.red .callout-title    { color: var(--accent); }
+
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .concept-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.3rem; transition: border-color 0.2s; }
+    .concept-card:hover { border-color: var(--muted); }
+    .concept-card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .concept-card h4 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .concept-card p  { font-size: 0.85rem; color: var(--muted); margin: 0; }
+    .concept-card .keyword { display: inline-block; margin-top: 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; color: var(--accent2); padding: 0.2rem 0.5rem; font-family: var(--code-font); }
+
+    .code-block { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.4rem; margin: 1.2rem 0; overflow-x: auto; font-family: var(--code-font); font-size: 0.85rem; line-height: 1.7; }
+    .code-block .comment { color: #4a5568; }
+    .code-block .keyword { color: #c792ea; }
+    .code-block .string  { color: #a8ff78; }
+    .code-block .fn      { color: #82aaff; }
+    .code-block .label   { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.6rem; font-family: var(--body-font); }
+
+    .compare-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.92rem; border-radius: 8px; overflow: hidden; }
+    .compare-table thead tr { background: var(--surface2); }
+    .compare-table th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    .compare-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: #c8cce8; vertical-align: top; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:nth-child(odd) td { background: rgba(255,255,255,0.015); }
+    .yes { color: var(--accent2); font-weight: 600; }
+    .no  { color: var(--accent);  font-weight: 600; }
+
+    .flow { display: flex; align-items: center; gap: 0.4rem; margin: 1.5rem 0; flex-wrap: wrap; }
+    .flow-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.85rem; font-weight: 600; color: var(--text); text-align: center; flex: 1; min-width: 120px; }
+    .flow-box.highlight { border-color: var(--accent2); color: var(--accent2); background: rgba(0,199,177,0.07); }
+    .flow-arrow { color: var(--muted); font-size: 1.1rem; flex-shrink: 0; }
+
+    .realworld { background: linear-gradient(135deg, rgba(255,165,0,0.06), rgba(255,54,33,0.04)); border: 1px solid rgba(255,165,0,0.2); border-radius: 10px; padding: 1.4rem; margin: 2rem 0; }
+    .realworld-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent3); font-weight: 700; margin-bottom: 0.6rem; }
+
+    .trap-list { list-style: none; padding: 0; margin: 0.75rem 0; }
+    .trap-list li { padding: 0.5rem 0 0.5rem 1.6rem; border-bottom: 1px solid var(--border); position: relative; font-size: 0.93rem; color: #c8cce8; }
+    .trap-list li:last-child { border-bottom: none; }
+    .trap-list li::before { content: "✗"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+    .progress-bar-wrap { background: var(--surface2); border-radius: 99px; height: 4px; overflow: hidden; margin-bottom: 2rem; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 99px; width: 15%; }
+
+    code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.4em; font-family: var(--code-font); font-size: 0.88em; color: #a8c0ff; }
+
+    .quiz-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin: 1rem 0; transition: border-color 0.3s; }
+    .quiz-block.answered-correct { border-color: #00c7b1; }
+    .quiz-block.answered-wrong   { border-color: var(--accent); }
+    .quiz-num { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 0.15rem 0.5rem; margin-right: 0.5rem; letter-spacing: 0.05em; vertical-align: middle; }
+    .quiz-q { font-weight: 600; color: var(--text); margin-bottom: 1rem; font-size: 0.97rem; line-height: 1.5; }
+    .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 500px) { .quiz-options { grid-template-columns: 1fr; } }
+    .quiz-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer; text-align: left; transition: background 0.2s, border-color 0.2s, color 0.2s; font-family: var(--body-font); line-height: 1.4; }
+    .quiz-opt:hover:not(:disabled) { background: #2a2f4a; border-color: var(--muted); }
+    .quiz-opt.correct { background: rgba(0,199,177,0.15); border-color: var(--accent2); color: var(--accent2); font-weight: 600; }
+    .quiz-opt.wrong   { background: rgba(255,54,33,0.12);  border-color: var(--accent);  color: var(--accent); }
+    .quiz-opt:disabled { cursor: default; }
+    .quiz-opt.correct:disabled { opacity: 1; }
+    .quiz-feedback { margin-top: 0.9rem; font-size: 0.88rem; }
+    .quiz-feedback.show-correct { color: var(--accent2); padding: 0.6rem 0.9rem; background: rgba(0,199,177,0.07); border-radius: 6px; border-left: 3px solid var(--accent2); }
+    .quiz-feedback.show-wrong   { color: #ff8a7a; padding: 0.6rem 0.9rem; background: rgba(255,54,33,0.07); border-radius: 6px; border-left: 3px solid var(--accent); }
+    .quiz-score-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    #score-text { font-weight: 600; font-size: 1rem; color: var(--text); }
+    .quiz-reset { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--muted); padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; font-family: var(--body-font); transition: border-color 0.2s, color 0.2s; }
+    .quiz-reset:hover { border-color: var(--muted); color: var(--text); }
+
+    .coffee-bar { text-align: center; padding: 2.5rem 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.88rem; }
+    .coffee-bar a { color: var(--accent2); text-decoration: none; font-weight: 600; }
+    .coffee-bar a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) { nav { padding: 1rem; } .hero, .article-body { padding-left: 1.2rem; padding-right: 1.2rem; } h1 { font-size: 1.6rem; } .flow { flex-direction: column; } }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-brand">Databricks <span>·</span> DE Associate</a>
+    <div class="nav-right">
+      <span class="nav-badge">Section 02 · Topic 3 of 5</span>
+      <button class="listen-btn" id="listenBtn" onclick="toggleListen()">
+        <span class="listen-dot"></span>
+        <span id="listenLabel">Listen</span>
+      </button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="article-meta">
+      <span class="tag section">Section 02</span>
+      <span class="tag live">Live</span>
+      <span class="tag">Development and Ingestion</span>
+    </div>
+    <h1>Classify valid Auto Loader sources and use cases</h1>
+    <p class="subtitle">Cloud storage triggers, schema inference, and when to use Auto Loader vs. COPY INTO.</p>
+  </header>
+
+  <article class="article-body">
+
+    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+
+    <h2>The Core Idea</h2>
+    <p>Auto Loader is Databricks' built-in mechanism for incrementally ingesting new files from cloud storage into Delta Lake. It monitors a source location, detects new files as they arrive, and processes only the new ones — without reprocessing files it has already seen.</p>
+    <p>Think of it as a smart, stateful file watcher: it tracks exactly which files have been processed using a checkpoint, so even if your pipeline restarts, it picks up exactly where it left off.</p>
+
+    <div class="callout blue">
+      <div class="callout-title">Exam Mindset</div>
+      Auto Loader questions test three things: <strong>what sources it supports</strong>, <strong>how it detects new files</strong>, and <strong>when to use it instead of COPY INTO</strong>. Get those three clear and you'll handle any scenario.
+    </div>
+
+    <h2>Valid Auto Loader Sources</h2>
+    <p>Auto Loader reads files from cloud object storage. It supports all major cloud providers and a wide range of file formats:</p>
+
+    <h3>Supported Cloud Storage Sources</h3>
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-card-icon">☁️</div>
+        <h4>AWS S3</h4>
+        <p>Amazon Simple Storage Service — the most common source in AWS-based Databricks deployments.</p>
+        <span class="keyword">s3://bucket/path</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🔷</div>
+        <h4>Azure Data Lake Storage</h4>
+        <p>ADLS Gen2 — the standard source for Azure Databricks workloads.</p>
+        <span class="keyword">abfss://container@account</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🟡</div>
+        <h4>Google Cloud Storage</h4>
+        <p>GCS — supported for GCP-based Databricks deployments.</p>
+        <span class="keyword">gs://bucket/path</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">📁</div>
+        <h4>DBFS</h4>
+        <p>Databricks File System — backed by cloud storage, can also be used as a source.</p>
+        <span class="keyword">dbfs:/path</span>
+      </div>
+    </div>
+
+    <h3>Supported File Formats</h3>
+    <table class="compare-table">
+      <thead><tr><th>Format</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>JSON</code></td><td>Schema inference works well; supports nested structures</td></tr>
+        <tr><td><code>CSV</code></td><td>Schema inference available; headers can be used</td></tr>
+        <tr><td><code>Parquet</code></td><td>Schema embedded in file — inferred automatically</td></tr>
+        <tr><td><code>Avro</code></td><td>Schema embedded; efficient for streaming ingestion</td></tr>
+        <tr><td><code>ORC</code></td><td>Columnar format; schema embedded</td></tr>
+        <tr><td><code>Delta</code></td><td>Can read Delta tables as a streaming source</td></tr>
+        <tr><td><code>Text / Binary</code></td><td>Raw ingestion of unstructured files</td></tr>
+      </tbody>
+    </table>
+
+    <h2>How Auto Loader Detects New Files</h2>
+    <p>Auto Loader has two file detection modes. The exam will test which to use and why:</p>
+
+    <h3>1. Directory Listing Mode (default)</h3>
+    <p>Auto Loader periodically lists all files in the source directory and compares them against what it has already processed. Simple to set up — no cloud configuration needed.</p>
+
+    <div class="callout green">
+      <div class="callout-title">Use directory listing when</div>
+      You have a smaller volume of files, your source directory is straightforward, or you want zero cloud setup. This is the default and works out of the box.
+    </div>
+
+    <h3>2. File Notification Mode (recommended for scale)</h3>
+    <p>Auto Loader sets up cloud event notifications (e.g. S3 Event Notifications + SQS, or Azure Event Grid) to receive instant alerts when new files arrive. No polling — files are processed as soon as they land.</p>
+
+    <div class="callout green">
+      <div class="callout-title">Use file notification when</div>
+      You have millions of files, need lower latency, or want to avoid the cost of repeatedly listing large directories. Requires cloud infrastructure permissions to set up.
+    </div>
+
+    <table class="compare-table">
+      <thead><tr><th></th><th>Directory Listing</th><th>File Notification</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Setup</strong></td><td>None</td><td>Cloud event infra required</td></tr>
+        <tr><td><strong>Scale</strong></td><td>Small–medium file volumes</td><td>Millions of files</td></tr>
+        <tr><td><strong>Latency</strong></td><td>Polling interval</td><td>Near real-time</td></tr>
+        <tr><td><strong>Cost</strong></td><td>LIST API calls</td><td>Event notifications (cheaper at scale)</td></tr>
+        <tr><td><strong>Config</strong></td><td><code>cloudFiles.useNotifications=false</code></td><td><code>cloudFiles.useNotifications=true</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Schema Inference and Evolution</h2>
+    <p>One of Auto Loader's most powerful features is automatic schema inference and schema evolution — handling changing source schemas without manual intervention.</p>
+
+    <h3>Schema Inference</h3>
+    <p>Auto Loader samples incoming files to infer the schema automatically. The inferred schema is stored in a <strong>schema location</strong> you specify, so it doesn't re-infer on every run.</p>
+
+    <div class="code-block">
+      <span class="label">Python — basic Auto Loader setup</span>
+      df = (spark.readStream<br>
+      &nbsp;&nbsp;.<span class="fn">format</span>(<span class="string">"cloudFiles"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="string">"cloudFiles.format"</span>, <span class="string">"json"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="string">"cloudFiles.schemaLocation"</span>, <span class="string">"/checkpoints/schema"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">load</span>(<span class="string">"s3://my-bucket/raw/events/"</span>))<br><br>
+      (df.writeStream<br>
+      &nbsp;&nbsp;.<span class="fn">format</span>(<span class="string">"delta"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="string">"checkpointLocation"</span>, <span class="string">"/checkpoints/events"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">trigger</span>(availableNow=<span class="keyword">True</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">toTable</span>(<span class="string">"catalog.bronze.events"</span>))
+    </div>
+
+    <div class="callout orange">
+      <div class="callout-title">Key exam points — format and schema</div>
+      The format is always <strong><code>"cloudFiles"</code></strong> — not "json" or "csv" directly. The actual file format goes in <code>cloudFiles.format</code>. The <code>schemaLocation</code> and <code>checkpointLocation</code> are both required for production use.
+    </div>
+
+    <h3>Schema Evolution</h3>
+    <p>When new columns appear in incoming files, Auto Loader can handle them automatically with <strong>schema evolution</strong>. New columns are added to the target Delta table rather than causing a pipeline failure.</p>
+
+    <div class="code-block">
+      <span class="label">Python — enabling schema evolution</span>
+      df = (spark.readStream<br>
+      &nbsp;&nbsp;.<span class="fn">format</span>(<span class="string">"cloudFiles"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="string">"cloudFiles.format"</span>, <span class="string">"json"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="string">"cloudFiles.schemaLocation"</span>, <span class="string">"/checkpoints/schema"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="string">"cloudFiles.inferColumnTypes"</span>, <span class="string">"true"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">load</span>(<span class="string">"s3://my-bucket/raw/events/"</span>))<br><br>
+      (df.writeStream<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="string">"mergeSchema"</span>, <span class="string">"true"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">format</span>(<span class="string">"delta"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="string">"checkpointLocation"</span>, <span class="string">"/checkpoints/events"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">toTable</span>(<span class="string">"catalog.bronze.events"</span>))
+    </div>
+
+    <h2>Auto Loader vs. COPY INTO</h2>
+    <p>This is the most tested decision in the exam for this topic. Both load files into Delta — but they suit different scenarios:</p>
+
+    <table class="compare-table">
+      <thead><tr><th></th><th>Auto Loader</th><th>COPY INTO</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Execution model</strong></td><td>Structured Streaming</td><td>Batch (SQL command)</td></tr>
+        <tr><td><strong>File tracking</strong></td><td>Checkpoint-based — stateful</td><td>Metadata-based — idempotent</td></tr>
+        <tr><td><strong>Scale</strong></td><td><span class="yes">Millions of files</span></td><td>Thousands of files</td></tr>
+        <tr><td><strong>Schema inference</strong></td><td><span class="yes">Yes — automatic + evolution</span></td><td>Limited</td></tr>
+        <tr><td><strong>Trigger</strong></td><td>Continuous or triggered</td><td>Manual / scheduled</td></tr>
+        <tr><td><strong>Best for</strong></td><td>Continuous ingestion pipelines</td><td>One-time or scheduled batch loads</td></tr>
+        <tr><td><strong>Syntax</strong></td><td>PySpark Structured Streaming</td><td>SQL command</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout red">
+      <div class="callout-title">Exam rule of thumb</div>
+      <strong>Continuous / streaming / large-scale / schema evolution → Auto Loader.</strong><br>
+      <strong>One-time load / batch / small files / SQL-only environment → COPY INTO.</strong>
+    </div>
+
+    <div class="realworld">
+      <div class="realworld-label">🏗️ Real-world note</div>
+      <p style="margin:0;font-size:0.93rem;">In production Bronze layer pipelines, Auto Loader is the standard choice for landing zone ingestion — files arrive continuously from upstream systems, schemas change over time, and volumes grow to millions of files. COPY INTO is typically used for one-time historical backfills or when a data team only has SQL access and needs a simple idempotent load command.</p>
+    </div>
+
+    <h2>The Auto Loader Flow</h2>
+
+    <div class="flow">
+      <div class="flow-box">☁️ Cloud Storage<br><small style="color:var(--muted);font-weight:400;">New files land</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box highlight">Auto Loader<br><small style="font-weight:400;">cloudFiles format</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">📋 Checkpoint<br><small style="color:var(--muted);font-weight:400;">Tracks processed files</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box">🥉 Delta Table<br><small style="color:var(--muted);font-weight:400;">Bronze layer</small></div>
+    </div>
+
+    <h2>Exam-Style Practice Questions</h2>
+    <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1.5rem;">Select an answer — green means correct, red means wrong.</p>
+
+    <div class="quiz-block" id="q1">
+      <div class="quiz-q"><span class="quiz-num">Q1</span> What format string do you use with <code>spark.readStream.format()</code> to enable Auto Loader?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q1" data-correct="false">"autoLoader"</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="true">"cloudFiles"</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">"json"</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">"delta"</button>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q2">
+      <div class="quiz-q"><span class="quiz-num">Q2</span> A pipeline ingests millions of JSON files from S3, arriving continuously. New columns appear occasionally. Which tool is most appropriate?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q2" data-correct="false">COPY INTO</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="true">Auto Loader with schema evolution</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">spark.read.json() in a scheduled job</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">SQL Warehouse batch query</button>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q3">
+      <div class="quiz-q"><span class="quiz-num">Q3</span> What is the key difference between Auto Loader's directory listing mode and file notification mode?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q3" data-correct="false">Directory listing is faster for large file volumes</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">File notification only works with Azure storage</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="true">File notification uses cloud events for instant detection; directory listing polls periodically</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">They are functionally identical</button>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q4">
+      <div class="quiz-q"><span class="quiz-num">Q4</span> A data engineer needs to do a one-time load of 500 CSV files from ADLS into a Delta table. Which approach is most appropriate?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Auto Loader with file notification mode</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="true">COPY INTO</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Auto Loader with directory listing</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">spark.readStream with a manual checkpoint</button>
+      </div>
+      <div class="quiz-feedback" id="q4-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q5">
+      <div class="quiz-q"><span class="quiz-num">Q5</span> Which option enables Auto Loader to automatically add new columns to the target Delta table when they appear in incoming files?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q5" data-correct="false"><code>cloudFiles.autoSchema=true</code></button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false"><code>cloudFiles.schemaLocation</code> alone</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="true"><code>mergeSchema=true</code> on the write stream</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false"><code>cloudFiles.inferColumnTypes=true</code> alone</button>
+      </div>
+      <div class="quiz-feedback" id="q5-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q6">
+      <div class="quiz-q"><span class="quiz-num">Q6</span> Which of the following is NOT a valid Auto Loader source?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q6" data-correct="false">AWS S3</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Azure Data Lake Storage Gen2</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="true">A Kafka topic</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Google Cloud Storage</button>
+      </div>
+      <div class="quiz-feedback" id="q6-feedback"></div>
+    </div>
+
+    <div class="quiz-score-bar" id="score-bar" style="display:none;">
+      <span id="score-text"></span>
+      <button class="quiz-reset" onclick="resetQuiz()">↺ Try Again</button>
+    </div>
+
+    <h2>Common Exam Traps</h2>
+    <p>These are the mistakes the exam is designed to catch:</p>
+    <ul class="trap-list">
+      <li>Using <code>"json"</code> as the format — Auto Loader always uses <code>"cloudFiles"</code>. The file format goes in <code>cloudFiles.format</code>.</li>
+      <li>Choosing Auto Loader for a one-time batch load — COPY INTO is simpler and more appropriate for that scenario.</li>
+      <li>Forgetting that Auto Loader uses Structured Streaming — it is not a batch read, it is a streaming source.</li>
+      <li>Assuming file notification works without cloud configuration — it requires setting up event notifications (SQS, Event Grid) on the storage account.</li>
+      <li>Thinking <code>schemaLocation</code> alone enables schema evolution — you also need <code>mergeSchema=true</code> on the write stream.</li>
+      <li>Confusing Auto Loader with Kafka — Auto Loader is for cloud object storage only, not message queues or streaming platforms.</li>
+    </ul>
+
+    <div class="callout orange">
+      <div class="callout-title">⚡ Quick Memory Trick</div>
+      <strong>Auto Loader = cloudFiles format + checkpoint + schema location.</strong> Those three things together are the complete Auto Loader setup. If any one is missing in an exam code snippet, that's the bug.
+    </div>
+
+  </article>
+
+  <footer class="coffee-bar">
+    All articles are completely free — but a £3 coffee keeps me publishing!<br>
+    <a href="https://ko-fi.com/nidhin">☕ Buy me a coffee</a>
+  </footer>
+
+  <script>
+    var quizAnswered = {};
+    var quizExplanations = {
+      q1: 'Auto Loader always uses "cloudFiles" as the format string. The actual file format (json, csv, parquet, etc.) is specified separately in the cloudFiles.format option.',
+      q2: 'Auto Loader with schema evolution is designed exactly for this — continuous high-volume ingestion from cloud storage with automatic handling of new columns via mergeSchema.',
+      q3: 'File notification mode uses cloud event infrastructure (SQS, Event Grid) to detect files instantly as they arrive. Directory listing polls the source directory at intervals — simpler but slower and costlier at scale.',
+      q4: 'COPY INTO is the right choice for one-time or small batch loads. It is idempotent, SQL-based, and simpler to use than setting up a full streaming pipeline for a one-off load.',
+      q5: 'Schema evolution requires mergeSchema=true on the write stream in addition to the cloudFiles.schemaLocation option on the read side. Both together enable full schema evolution.',
+      q6: 'Auto Loader only supports cloud object storage sources (S3, ADLS, GCS, DBFS). Kafka is a message streaming platform — use spark.readStream.format("kafka") for that instead.'
+    };
+    var quizTotal = Object.keys(quizExplanations).length;
+
+    document.querySelectorAll('.quiz-opt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var qId = btn.getAttribute('data-qid');
+        var isCorrect = btn.getAttribute('data-correct') === 'true';
+        if (quizAnswered[qId]) return;
+        quizAnswered[qId] = isCorrect ? 'correct' : 'wrong';
+        var block = document.getElementById(qId);
+        var feedback = document.getElementById(qId + '-feedback');
+        var allBtns = block.querySelectorAll('.quiz-opt');
+        allBtns.forEach(function(b) { b.disabled = true; });
+        if (isCorrect) {
+          btn.classList.add('correct'); block.classList.add('answered-correct');
+          feedback.textContent = '✓ Correct! ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-correct';
+        } else {
+          btn.classList.add('wrong'); block.classList.add('answered-wrong');
+          feedback.textContent = '✗ Not quite. ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-wrong';
+          allBtns.forEach(function(b) { if (b.getAttribute('data-correct') === 'true') { b.classList.add('correct'); b.style.opacity = '1'; } });
+        }
+        if (Object.keys(quizAnswered).length === quizTotal) {
+          var correct = Object.values(quizAnswered).filter(function(v){return v==='correct';}).length;
+          var pct = Math.round((correct/quizTotal)*100);
+          var emoji = pct===100?'🏆':pct>=67?'💪':'📖';
+          document.getElementById('score-text').textContent = emoji+' You scored '+correct+' / '+quizTotal+' ('+pct+'%)';
+          document.getElementById('score-bar').style.display = 'flex';
+        }
+      });
+    });
+
+    function resetQuiz() {
+      quizAnswered = {};
+      document.querySelectorAll('.quiz-block').forEach(function(block) {
+        block.className = 'quiz-block';
+        var fb = block.querySelector('.quiz-feedback'); fb.textContent=''; fb.className='quiz-feedback';
+        block.querySelectorAll('.quiz-opt').forEach(function(b){b.disabled=false;b.classList.remove('correct','wrong');b.style.opacity='';});
+      });
+      document.getElementById('score-bar').style.display = 'none';
+    }
+
+    // ── LISTEN (chunked — fixes Chrome silent-stop bug) ──
+    var listenChunks=[],listenActive=false;
+    function getBritishFemaleVoice(){var voices=speechSynthesis.getVoices();var p=[function(v){return v.name==='Google UK English Female';},function(v){return v.name.indexOf('Serena')>-1;},function(v){return v.name.indexOf('Martha')>-1;},function(v){return v.name.indexOf('Kate')>-1;},function(v){return v.lang==='en-GB'&&v.name.toLowerCase().indexOf('female')>-1;},function(v){return v.lang==='en-GB'&&v.name.toLowerCase().indexOf('male')===-1;},function(v){return v.lang==='en-GB';}];for(var i=0;i<p.length;i++){var f=voices.filter(p[i])[0];if(f)return f;}return null;}
+    function speakChunk(index){if(!listenActive||index>=listenChunks.length){stopListen();return;}var utt=new SpeechSynthesisUtterance(listenChunks[index]);utt.rate=0.93;utt.pitch=1.05;utt.lang='en-GB';var voice=getBritishFemaleVoice();if(voice)utt.voice=voice;utt.onend=function(){if(listenActive)speakChunk(index+1);};utt.onerror=function(e){if(e.error!=='interrupted')stopListen();};speechSynthesis.speak(utt);}
+    function startListen(){var article=document.querySelector('article.article-body');var rawText=article?article.innerText:document.body.innerText;var sentences=rawText.match(/[^.!?\n]+[.!?\n]*/g)||[rawText];listenChunks=[];var chunk='';for(var i=0;i<sentences.length;i++){chunk+=sentences[i];if(chunk.length>=180||i===sentences.length-1){if(chunk.trim())listenChunks.push(chunk.trim());chunk='';}}listenActive=true;document.getElementById('listenBtn').classList.add('playing');document.getElementById('listenLabel').textContent='Stop';var doSpeak=function(){speakChunk(0);};if(speechSynthesis.getVoices().length>0){doSpeak();}else{speechSynthesis.onvoiceschanged=function(){speechSynthesis.onvoiceschanged=null;doSpeak();};}}
+    function stopListen(){listenActive=false;speechSynthesis.cancel();var btn=document.getElementById('listenBtn');var label=document.getElementById('listenLabel');if(btn)btn.classList.remove('playing');if(label)label.textContent='Listen';}
+    function toggleListen(){if(listenActive){stopListen();}else{startListen();}}
+    window.addEventListener('beforeunload',function(){speechSynthesis.cancel();});
+  </script>
+
+</body>
+</html>
