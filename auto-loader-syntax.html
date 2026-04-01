@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demonstrate knowledge of Auto Loader syntax — Databricks DE Associate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3250;
+      --text: #e8eaf6; --muted: #7c82a8; --accent: #ff3621; --accent2: #00c7b1;
+      --accent3: #ffa500; --heading-font: 'Georgia', serif;
+      --body-font: system-ui, -apple-system, sans-serif; --code-font: 'Courier New', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--body-font); font-size: 16px; line-height: 1.75; }
+
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
+    .nav-brand { font-size: 0.85rem; font-weight: 600; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; text-transform: uppercase; }
+    .nav-brand span { color: var(--accent); }
+    .nav-right { display: flex; gap: 1rem; align-items: center; }
+    .nav-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; font-size: 0.75rem; color: var(--muted); padding: 0.25rem 0.75rem; }
+    .listen-btn { display: flex; align-items: center; gap: 0.4rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; font-size: 0.75rem; font-family: var(--body-font); color: var(--muted); padding: 0.25rem 0.85rem; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; white-space: nowrap; }
+    .listen-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .listen-btn.playing { border-color: var(--accent2); color: var(--accent2); background: rgba(0,199,177,0.08); }
+    .listen-btn .listen-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .listen-btn.playing .listen-dot { animation: blink 1s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+    .hero { max-width: 780px; margin: 4rem auto 0; padding: 0 2rem; }
+    .article-meta { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; color: var(--muted); padding: 0.2rem 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+    .tag.live { background: rgba(0,199,177,0.1); border-color: var(--accent2); color: var(--accent2); }
+    .tag.section { background: rgba(255,54,33,0.08); border-color: var(--accent); color: var(--accent); }
+    h1 { font-family: var(--heading-font); font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2; color: #fff; margin-bottom: 1rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 2rem; }
+
+    .article-body { max-width: 780px; margin: 0 auto; padding: 0 2rem 5rem; }
+    h2 { font-family: var(--heading-font); font-size: 1.45rem; color: #fff; margin: 2.8rem 0 0.9rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin: 2rem 0 0.6rem; }
+    p { margin-bottom: 1rem; color: #c8cce8; }
+
+    .callout { border-radius: 8px; padding: 1.2rem 1.4rem; margin: 1.5rem 0; border-left: 4px solid; font-size: 0.95rem; color: #c8cce8; }
+    .callout.blue   { background: rgba(99,131,255,0.07); border-color: #6383ff; }
+    .callout.green  { background: rgba(0,199,177,0.07);  border-color: var(--accent2); }
+    .callout.orange { background: rgba(255,165,0,0.07);  border-color: var(--accent3); }
+    .callout.red    { background: rgba(255,54,33,0.07);  border-color: var(--accent); }
+    .callout-title { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; }
+    .callout.blue   .callout-title { color: #6383ff; }
+    .callout.green  .callout-title { color: var(--accent2); }
+    .callout.orange .callout-title { color: var(--accent3); }
+    .callout.red    .callout-title { color: var(--accent); }
+
+    /* CODE BLOCKS */
+    .code-block { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.4rem; margin: 1.2rem 0; overflow-x: auto; font-family: var(--code-font); font-size: 0.85rem; line-height: 1.8; }
+    .code-block .comment { color: #4a5568; }
+    .code-block .kw  { color: #c792ea; }
+    .code-block .str { color: #a8ff78; }
+    .code-block .fn  { color: #82aaff; }
+    .code-block .opt { color: var(--accent3); }
+    .code-block .label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem; font-family: var(--body-font); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+
+    /* OPTION TABLE */
+    .compare-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.91rem; border-radius: 8px; overflow: hidden; }
+    .compare-table thead tr { background: var(--surface2); }
+    .compare-table th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    .compare-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: #c8cce8; vertical-align: top; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:nth-child(odd) td { background: rgba(255,255,255,0.015); }
+
+    /* OPTION PILL */
+    .opt-pill { display: inline-block; background: rgba(255,165,0,0.1); border: 1px solid rgba(255,165,0,0.25); border-radius: 4px; font-family: var(--code-font); font-size: 0.78rem; color: var(--accent3); padding: 0.15rem 0.5rem; }
+    .req-pill { display: inline-block; background: rgba(255,54,33,0.1); border: 1px solid rgba(255,54,33,0.25); border-radius: 4px; font-size: 0.72rem; color: var(--accent); padding: 0.1rem 0.45rem; font-family: var(--body-font); font-weight: 700; letter-spacing: 0.04em; margin-left: 4px; }
+
+    /* RESCUE COLUMN HIGHLIGHT */
+    .rescue-box { background: var(--surface); border: 1px solid var(--accent2); border-radius: 10px; padding: 1.4rem; margin: 1.5rem 0; }
+    .rescue-box-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent2); font-weight: 700; margin-bottom: 0.6rem; }
+
+    .realworld { background: linear-gradient(135deg, rgba(255,165,0,0.06), rgba(255,54,33,0.04)); border: 1px solid rgba(255,165,0,0.2); border-radius: 10px; padding: 1.4rem; margin: 2rem 0; }
+    .realworld-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent3); font-weight: 700; margin-bottom: 0.6rem; }
+
+    .trap-list { list-style: none; padding: 0; margin: 0.75rem 0; }
+    .trap-list li { padding: 0.5rem 0 0.5rem 1.6rem; border-bottom: 1px solid var(--border); position: relative; font-size: 0.93rem; color: #c8cce8; }
+    .trap-list li:last-child { border-bottom: none; }
+    .trap-list li::before { content: "✗"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+    .progress-bar-wrap { background: var(--surface2); border-radius: 99px; height: 4px; overflow: hidden; margin-bottom: 2rem; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 99px; width: 15%; }
+
+    code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.4em; font-family: var(--code-font); font-size: 0.88em; color: #a8c0ff; }
+
+    /* QUIZ */
+    .quiz-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin: 1rem 0; transition: border-color 0.3s; }
+    .quiz-block.answered-correct { border-color: #00c7b1; }
+    .quiz-block.answered-wrong   { border-color: var(--accent); }
+    .quiz-num { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 0.15rem 0.5rem; margin-right: 0.5rem; letter-spacing: 0.05em; vertical-align: middle; }
+    .quiz-q { font-weight: 600; color: var(--text); margin-bottom: 1rem; font-size: 0.97rem; line-height: 1.5; }
+    .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 500px) { .quiz-options { grid-template-columns: 1fr; } }
+    .quiz-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer; text-align: left; transition: background 0.2s, border-color 0.2s, color 0.2s; font-family: var(--body-font); line-height: 1.4; }
+    .quiz-opt:hover:not(:disabled) { background: #2a2f4a; border-color: var(--muted); }
+    .quiz-opt.correct { background: rgba(0,199,177,0.15); border-color: var(--accent2); color: var(--accent2); font-weight: 600; }
+    .quiz-opt.wrong   { background: rgba(255,54,33,0.12);  border-color: var(--accent);  color: var(--accent); }
+    .quiz-opt:disabled { cursor: default; }
+    .quiz-opt.correct:disabled { opacity: 1; }
+    .quiz-feedback { margin-top: 0.9rem; font-size: 0.88rem; }
+    .quiz-feedback.show-correct { color: var(--accent2); padding: 0.6rem 0.9rem; background: rgba(0,199,177,0.07); border-radius: 6px; border-left: 3px solid var(--accent2); }
+    .quiz-feedback.show-wrong   { color: #ff8a7a; padding: 0.6rem 0.9rem; background: rgba(255,54,33,0.07); border-radius: 6px; border-left: 3px solid var(--accent); }
+    .quiz-score-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    #score-text { font-weight: 600; font-size: 1rem; color: var(--text); }
+    .quiz-reset { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--muted); padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; font-family: var(--body-font); transition: border-color 0.2s, color 0.2s; }
+    .quiz-reset:hover { border-color: var(--muted); color: var(--text); }
+
+    .coffee-bar { text-align: center; padding: 2.5rem 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.88rem; }
+    .coffee-bar a { color: var(--accent2); text-decoration: none; font-weight: 600; }
+    .coffee-bar a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) { nav { padding: 1rem; } .hero, .article-body { padding-left: 1.2rem; padding-right: 1.2rem; } h1 { font-size: 1.6rem; } }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-brand">Databricks <span>·</span> DE Associate</a>
+    <div class="nav-right">
+      <span class="nav-badge">Section 02 · Topic 4 of 5</span>
+      <button class="listen-btn" id="listenBtn" onclick="toggleListen()">
+        <span class="listen-dot"></span>
+        <span id="listenLabel">Listen</span>
+      </button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="article-meta">
+      <span class="tag section">Section 02</span>
+      <span class="tag live">Live</span>
+      <span class="tag">Development and Ingestion</span>
+    </div>
+    <h1>Demonstrate knowledge of Auto Loader syntax</h1>
+    <p class="subtitle">cloudFiles format, checkpointing, schema hints, and rescue data column.</p>
+  </header>
+
+  <article class="article-body">
+
+    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+
+    <!-- CORE IDEA -->
+    <h2>The Core Idea</h2>
+    <p>This topic is about the <em>syntax</em> of Auto Loader — not just knowing it exists, but being able to read a code snippet and identify what each option does, what is required vs. optional, and what happens when something is missing or misconfigured.</p>
+    <p>The exam will show you Auto Loader code and ask you to spot the bug, complete the missing option, or explain what a specific line does. This article covers every option you need to know cold.</p>
+
+    <div class="callout blue">
+      <div class="callout-title">Exam Mindset</div>
+      Four things are tested on syntax: the <strong>cloudFiles format</strong>, the <strong>checkpoint location</strong>, <strong>schema hints</strong>, and the <strong>rescue data column</strong>. Know all four in detail — what they do, where they go in the code, and what breaks without them.
+    </div>
+
+    <!-- THE COMPLETE TEMPLATE -->
+    <h2>The Complete Auto Loader Template</h2>
+    <p>This is the full production-ready pattern. Every exam question is a variation of this structure:</p>
+
+    <div class="code-block">
+      <span class="label">Python — complete Auto Loader read + write stream</span>
+      <span class="comment"># READ STREAM — source config</span><br>
+      df = (spark.readStream<br>
+      &nbsp;&nbsp;.<span class="fn">format</span>(<span class="str">"cloudFiles"</span>)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># ① always "cloudFiles"</span><br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"cloudFiles.format"</span>, <span class="str">"json"</span>)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># ② actual file format</span><br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"cloudFiles.schemaLocation"</span>, <span class="str">"/ckpt/schema"</span>)&nbsp;&nbsp;<span class="comment"># ③ schema storage</span><br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"cloudFiles.inferColumnTypes"</span>, <span class="str">"true"</span>)&nbsp;&nbsp;&nbsp;<span class="comment"># ④ infer exact types</span><br>
+      &nbsp;&nbsp;.<span class="fn">schema</span>(mySchema)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># ⑤ optional schema hint</span><br>
+      &nbsp;&nbsp;.<span class="fn">load</span>(<span class="str">"s3://my-bucket/landing/events/"</span>))<br><br>
+      <span class="comment"># WRITE STREAM — target config</span><br>
+      (df.writeStream<br>
+      &nbsp;&nbsp;.<span class="fn">format</span>(<span class="str">"delta"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"checkpointLocation"</span>, <span class="str">"/ckpt/events"</span>)&nbsp;&nbsp;<span class="comment"># ⑥ required checkpoint</span><br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"mergeSchema"</span>, <span class="str">"true"</span>)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># ⑦ schema evolution</span><br>
+      &nbsp;&nbsp;.<span class="fn">trigger</span>(availableNow=<span class="kw">True</span>)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># ⑧ batch trigger</span><br>
+      &nbsp;&nbsp;.<span class="fn">toTable</span>(<span class="str">"catalog.bronze.events"</span>))
+    </div>
+
+    <p>Each numbered line is a potential exam question. Let's go through all of them.</p>
+
+    <!-- CLOUDFILES FORMAT -->
+    <h2>① The cloudFiles Format</h2>
+    <p>The outer format is always <code>"cloudFiles"</code> — this is what activates Auto Loader. The actual file format (JSON, CSV, Parquet, etc.) is specified separately inside <code>cloudFiles.format</code>.</p>
+
+    <div class="callout red">
+      <div class="callout-title">Exam trap — two formats, two places</div>
+      <code>.format("cloudFiles")</code> goes on <code>readStream</code>. <code>.option("cloudFiles.format", "json")</code> specifies the file type. If an exam question uses <code>.format("json")</code> directly on a streaming read, that is the bug — it will not activate Auto Loader.
+    </div>
+
+    <table class="compare-table">
+      <thead><tr><th>Option</th><th>Where</th><th>Required</th><th>Example value</th></tr></thead>
+      <tbody>
+        <tr><td><span class="opt-pill">format("cloudFiles")</span></td><td><code>readStream</code></td><td><span style="color:var(--accent);font-weight:700;">Yes</span></td><td>Always <code>"cloudFiles"</code></td></tr>
+        <tr><td><span class="opt-pill">cloudFiles.format</span></td><td><code>.option()</code></td><td><span style="color:var(--accent);font-weight:700;">Yes</span></td><td><code>"json"</code>, <code>"csv"</code>, <code>"parquet"</code>, <code>"avro"</code></td></tr>
+        <tr><td><span class="opt-pill">cloudFiles.schemaLocation</span></td><td><code>.option()</code></td><td><span style="color:var(--accent);font-weight:700;">Yes*</span></td><td>Cloud storage path for schema</td></tr>
+        <tr><td><span class="opt-pill">cloudFiles.inferColumnTypes</span></td><td><code>.option()</code></td><td>Optional</td><td><code>"true"</code> — infers exact types vs. all strings</td></tr>
+        <tr><td><span class="opt-pill">cloudFiles.useNotifications</span></td><td><code>.option()</code></td><td>Optional</td><td><code>"true"</code> for event-based detection</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:0.85rem;color:var(--muted);">* Required when using schema inference. Can be omitted only if you provide a full explicit schema.</p>
+
+    <!-- CHECKPOINTING -->
+    <h2>② Checkpointing</h2>
+    <p>The checkpoint is what makes Auto Loader stateful. It records exactly which files have been processed so the pipeline can resume exactly where it left off after a restart — with no duplicate processing and no missed files.</p>
+
+    <p>There are actually <strong>two separate checkpoint-related options</strong> and the exam tests whether you know the difference:</p>
+
+    <table class="compare-table">
+      <thead><tr><th>Option</th><th>Where it goes</th><th>What it stores</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="opt-pill">cloudFiles.schemaLocation</span></td>
+          <td>On <code>readStream</code></td>
+          <td>The inferred schema — column names and types. Prevents re-inferring on every run.</td>
+        </tr>
+        <tr>
+          <td><span class="opt-pill">checkpointLocation</span></td>
+          <td>On <code>writeStream</code></td>
+          <td>The streaming state — which files have been processed, offsets, progress metadata.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout red">
+      <div class="callout-title">Exam trap — missing checkpointLocation</div>
+      If <code>checkpointLocation</code> is missing from the <code>writeStream</code>, the pipeline will throw an error: <em>checkpointLocation must be specified</em>. This is one of the most common "what's wrong with this code" exam questions.
+    </div>
+
+    <div class="callout orange">
+      <div class="callout-title">Key rule — separate paths</div>
+      The <code>schemaLocation</code> and <code>checkpointLocation</code> paths must be <strong>different</strong>. Using the same path for both will cause conflicts. Always give each its own directory.
+    </div>
+
+    <div class="code-block">
+      <span class="label">Python — correct checkpoint setup</span>
+      <span class="comment"># ✓ Correct — separate paths for schema and checkpoint</span><br>
+      .<span class="fn">option</span>(<span class="opt">"cloudFiles.schemaLocation"</span>, <span class="str">"/checkpoints/my_pipeline/schema"</span>)<br>
+      .<span class="fn">option</span>(<span class="opt">"checkpointLocation"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"/checkpoints/my_pipeline/state"</span>)<br><br>
+      <span class="comment"># ✗ Wrong — same path causes conflicts</span><br>
+      .<span class="fn">option</span>(<span class="opt">"cloudFiles.schemaLocation"</span>, <span class="str">"/checkpoints/my_pipeline"</span>)<br>
+      .<span class="fn">option</span>(<span class="opt">"checkpointLocation"</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"/checkpoints/my_pipeline"</span>)
+    </div>
+
+    <!-- SCHEMA HINTS -->
+    <h2>③ Schema Hints</h2>
+    <p>By default, Auto Loader infers the schema by sampling incoming files. But sometimes you know part of the schema in advance — or you need specific columns to be a particular type. That's where <strong>schema hints</strong> come in.</p>
+
+    <p>Schema hints let you override the inferred type for specific columns without providing a full explicit schema. You define hints as a comma-separated string of <code>column_name type</code> pairs:</p>
+
+    <div class="code-block">
+      <span class="label">Python — schema hints</span>
+      df = (spark.readStream<br>
+      &nbsp;&nbsp;.<span class="fn">format</span>(<span class="str">"cloudFiles"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"cloudFiles.format"</span>, <span class="str">"json"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"cloudFiles.schemaLocation"</span>, <span class="str">"/ckpt/schema"</span>)<br>
+      &nbsp;&nbsp;<span class="comment"># Override specific columns — leave rest to inference</span><br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"cloudFiles.schemaHints"</span>,<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"event_timestamp TIMESTAMP, user_id LONG, amount DOUBLE"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">load</span>(<span class="str">"s3://my-bucket/landing/events/"</span>))
+    </div>
+
+    <h3>Schema hints vs. full schema</h3>
+    <table class="compare-table">
+      <thead><tr><th></th><th>Schema Hints</th><th>Full Schema (.schema())</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Syntax</strong></td><td><code>cloudFiles.schemaHints</code> option</td><td><code>.schema(StructType(...))</code></td></tr>
+        <tr><td><strong>Columns covered</strong></td><td>Only specified columns — rest inferred</td><td>All columns explicitly defined</td></tr>
+        <tr><td><strong>New columns</strong></td><td>Still handled by inference + evolution</td><td>Goes to rescue data column</td></tr>
+        <tr><td><strong>Best for</strong></td><td>Fixing inferred types for key columns</td><td>Fully controlled, stable schemas</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout green">
+      <div class="callout-title">Key exam point</div>
+      Schema hints do <strong>not</strong> prevent new unknown columns from being ingested — they just fix the type of known columns. Unknown columns still flow through (or go to the rescue data column if a full schema is in use).
+    </div>
+
+    <!-- RESCUE DATA COLUMN -->
+    <h2>④ The Rescue Data Column</h2>
+
+    <div class="rescue-box">
+      <div class="rescue-box-title">🚑 What is the rescue data column?</div>
+      <p style="margin:0;font-size:0.95rem;">When Auto Loader uses schema inference or a full explicit schema, any data that doesn't fit the schema — wrong types, unexpected columns, malformed values — is <strong>not dropped or rejected</strong>. Instead, it's captured in a special column called <code>_rescued_data</code> as a JSON string. This means you never silently lose data.</p>
+    </div>
+
+    <p>The rescue data column is enabled <strong>automatically</strong> when you use <code>cloudFiles.schemaLocation</code>. You don't have to turn it on — but you need to know what it contains and when it fires.</p>
+
+    <h3>What gets rescued?</h3>
+    <table class="compare-table">
+      <thead><tr><th>Scenario</th><th>Goes to <code>_rescued_data</code>?</th></tr></thead>
+      <tbody>
+        <tr><td>Column exists in schema but value is wrong type</td><td><span style="color:var(--accent2);font-weight:600;">Yes</span></td></tr>
+        <tr><td>Column in file not present in schema</td><td><span style="color:var(--accent2);font-weight:600;">Yes</span></td></tr>
+        <tr><td>Column name has different capitalisation</td><td><span style="color:var(--accent2);font-weight:600;">Yes</span></td></tr>
+        <tr><td>Column in schema but missing from file</td><td><span style="color:var(--accent);font-weight:600;">No — returns null</span></td></tr>
+        <tr><td>Entire row is malformed JSON</td><td><span style="color:var(--accent);font-weight:600;">No — goes to corrupt record</span></td></tr>
+      </tbody>
+    </table>
+
+    <div class="code-block">
+      <span class="label">Python — querying the rescue data column</span>
+      <span class="comment"># Read stream with schema enforcement</span><br>
+      <span class="kw">from</span> pyspark.sql.types <span class="kw">import</span> StructType, StructField, StringType, LongType<br><br>
+      mySchema = StructType([<br>
+      &nbsp;&nbsp;StructField(<span class="str">"event_id"</span>, LongType()),<br>
+      &nbsp;&nbsp;StructField(<span class="str">"event_type"</span>, StringType()),<br>
+      &nbsp;&nbsp;StructField(<span class="str">"user_id"</span>, LongType())<br>
+      ])<br><br>
+      df = (spark.readStream<br>
+      &nbsp;&nbsp;.<span class="fn">format</span>(<span class="str">"cloudFiles"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"cloudFiles.format"</span>, <span class="str">"json"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">option</span>(<span class="opt">"cloudFiles.schemaLocation"</span>, <span class="str">"/ckpt/schema"</span>)<br>
+      &nbsp;&nbsp;.<span class="fn">schema</span>(mySchema)<br>
+      &nbsp;&nbsp;.<span class="fn">load</span>(<span class="str">"s3://my-bucket/landing/"</span>))<br><br>
+      <span class="comment"># Check for rescued data — good data quality practice</span><br>
+      rescued = df.<span class="fn">filter</span>(df._rescued_data.<span class="fn">isNotNull</span>())<br>
+      rescued.<span class="fn">display</span>()
+    </div>
+
+    <div class="callout orange">
+      <div class="callout-title">Key exam point — rescue vs. schema evolution</div>
+      These are complementary, not alternatives. <strong>Schema evolution</strong> (<code>mergeSchema=true</code>) adds new columns to the Delta table over time. The <strong>rescue data column</strong> captures data that can't fit the current schema right now. Both can be active simultaneously.
+    </div>
+
+    <!-- TRIGGER MODES -->
+    <h2>⑤ Trigger Modes</h2>
+    <p>Auto Loader is a Structured Streaming source, so the write stream trigger controls how often it processes new files:</p>
+
+    <table class="compare-table">
+      <thead><tr><th>Trigger</th><th>Behaviour</th><th>Best for</th></tr></thead>
+      <tbody>
+        <tr><td><code>trigger(availableNow=True)</code></td><td>Processes all new files in one micro-batch, then stops</td><td>Scheduled Jobs — run on a cron, process everything, shut down</td></tr>
+        <tr><td><code>trigger(processingTime="5 minutes")</code></td><td>Runs every 5 minutes continuously</td><td>Near-real-time ingestion with bounded latency</td></tr>
+        <tr><td><code>trigger(once=True)</code></td><td>Legacy version of availableNow — processes once then stops</td><td>Older pipelines — prefer availableNow in DBR 10.1+</td></tr>
+        <tr><td>No trigger (default)</td><td>Runs as fast as possible — continuous micro-batches</td><td>Low-latency streaming</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout green">
+      <div class="callout-title">Key exam point — availableNow vs. once</div>
+      <code>trigger(availableNow=True)</code> is the modern replacement for <code>trigger(once=True)</code>. Both process all available files and stop — but <code>availableNow</code> is more efficient as it can use multiple micro-batches. If an exam question asks about processing all pending files in a scheduled job, <code>availableNow</code> is the answer.
+    </div>
+
+    <!-- REAL WORLD -->
+    <div class="realworld">
+      <div class="realworld-label">🏗️ Real-world note</div>
+      <p style="margin:0;font-size:0.93rem;">In production Bronze pipelines, the typical pattern is Auto Loader with <code>trigger(availableNow=True)</code> triggered by a Databricks Workflow on a schedule — say, every 15 minutes. This gives you a balance between latency and cost: you're not running a continuous stream 24/7, but you're still ingesting regularly. The checkpoint ensures each run picks up exactly where the last one left off.</p>
+    </div>
+
+    <!-- EXAM QUESTIONS -->
+    <h2>Exam-Style Practice Questions</h2>
+    <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1.5rem;">Select an answer — green means correct, red means wrong.</p>
+
+    <div class="quiz-block" id="q1">
+      <div class="quiz-q"><span class="quiz-num">Q1</span> The following code is missing something critical. What is wrong?<br><br>
+      <code style="font-size:0.82rem;display:block;margin-top:0.5rem;padding:0.6rem;background:rgba(0,0,0,0.3);border-radius:4px;">spark.readStream.format("cloudFiles").option("cloudFiles.format","json").load("s3://bucket/data/")</code></div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Should use .format("json") not "cloudFiles"</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="true">Missing cloudFiles.schemaLocation option</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Missing a trigger mode</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">load() path format is wrong for S3</button>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q2">
+      <div class="quiz-q"><span class="quiz-num">Q2</span> A data engineer sets <code>cloudFiles.schemaLocation</code> and <code>checkpointLocation</code> to the same path. What happens?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q2" data-correct="false">It works fine — they share the same metadata store</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">Only the schema is saved, checkpoint is ignored</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="true">It causes conflicts — they must use separate paths</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">The pipeline silently uses only the checkpointLocation</button>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q3">
+      <div class="quiz-q"><span class="quiz-num">Q3</span> An incoming JSON file contains a column <code>promo_code</code> that is not in the defined schema. With Auto Loader's rescue data column enabled, what happens to this data?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q3" data-correct="false">The entire row is dropped</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">The pipeline throws a schema mismatch error</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="true">The value is captured in the <code>_rescued_data</code> column as JSON</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">The column is added to the schema automatically</button>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q4">
+      <div class="quiz-q"><span class="quiz-num">Q4</span> You want Auto Loader to infer the schema but force <code>event_timestamp</code> to be a <code>TIMESTAMP</code> type instead of a string. Which option do you use?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q4" data-correct="false"><code>cloudFiles.enforceSchema</code></button>
+        <button class="quiz-opt" data-qid="q4" data-correct="true"><code>cloudFiles.schemaHints</code></button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false"><code>cloudFiles.inferColumnTypes</code></button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false"><code>.schema(StructType(...))</code> with all columns</button>
+      </div>
+      <div class="quiz-feedback" id="q4-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q5">
+      <div class="quiz-q"><span class="quiz-num">Q5</span> A pipeline uses <code>trigger(availableNow=True)</code>. What does this mean?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q5" data-correct="false">The pipeline runs continuously, processing files as they arrive</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">The pipeline only processes files that are less than 1 hour old</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="true">The pipeline processes all currently available new files, then stops</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">The pipeline skips files already in the checkpoint</button>
+      </div>
+      <div class="quiz-feedback" id="q5-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q6">
+      <div class="quiz-q"><span class="quiz-num">Q6</span> Which of the following correctly describes the difference between <code>cloudFiles.schemaLocation</code> and <code>checkpointLocation</code>?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q6" data-correct="false">They are interchangeable — both store the same metadata</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">schemaLocation stores file offsets; checkpointLocation stores column types</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="true">schemaLocation stores the inferred schema on the read side; checkpointLocation stores streaming state on the write side</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">checkpointLocation is optional when schemaLocation is set</button>
+      </div>
+      <div class="quiz-feedback" id="q6-feedback"></div>
+    </div>
+
+    <div class="quiz-score-bar" id="score-bar" style="display:none;">
+      <span id="score-text"></span>
+      <button class="quiz-reset" onclick="resetQuiz()">↺ Try Again</button>
+    </div>
+
+    <!-- EXAM TRAPS -->
+    <h2>Common Exam Traps</h2>
+    <p>These are the mistakes the exam is designed to catch:</p>
+    <ul class="trap-list">
+      <li>Using <code>.format("json")</code> instead of <code>.format("cloudFiles")</code> — always <code>"cloudFiles"</code> on the outer format.</li>
+      <li>Forgetting <code>checkpointLocation</code> on the write stream — the pipeline will error without it.</li>
+      <li>Using the same path for <code>schemaLocation</code> and <code>checkpointLocation</code> — they must be separate directories.</li>
+      <li>Thinking schema hints replace the full schema — hints only override specific column types; the rest are still inferred.</li>
+      <li>Thinking the rescue data column must be manually enabled — it is automatic when <code>schemaLocation</code> is set.</li>
+      <li>Confusing <code>trigger(once=True)</code> and <code>trigger(availableNow=True)</code> — prefer <code>availableNow</code> for DBR 10.1+ as it is more efficient.</li>
+      <li>Thinking <code>mergeSchema=true</code> and the rescue column do the same thing — schema evolution adds new columns to the table; the rescue column captures data that doesn't fit the current schema right now.</li>
+    </ul>
+
+    <div class="callout orange">
+      <div class="callout-title">⚡ Quick Memory Trick</div>
+      <strong>The Auto Loader checklist: cloudFiles format → cloudFiles.format → schemaLocation → checkpointLocation.</strong> Every valid Auto Loader pipeline has all four. If one is missing in an exam code snippet — that is the bug.
+    </div>
+
+  </article>
+
+  <footer class="coffee-bar">
+    All articles are completely free — but a £3 coffee keeps me publishing!<br>
+    <a href="https://ko-fi.com/nidhin">☕ Buy me a coffee</a>
+  </footer>
+
+  <script>
+    var quizAnswered = {};
+    var quizExplanations = {
+      q1: 'cloudFiles.schemaLocation is required when using schema inference. Without it, Auto Loader cannot store the inferred schema and will re-infer on every run — or throw an error depending on the DBR version.',
+      q2: 'schemaLocation and checkpointLocation must use separate paths. Sharing a path causes conflicts between the schema metadata and the streaming state metadata.',
+      q3: 'The rescue data column _rescued_data captures any data that does not fit the current schema — including unknown columns, type mismatches, and capitalisation differences — as a JSON string. No data is silently dropped.',
+      q4: 'cloudFiles.schemaHints lets you override the inferred type for specific columns without providing a full schema. Format: "column_name TYPE, column_name TYPE" as a comma-separated string.',
+      q5: 'trigger(availableNow=True) is a one-shot batch trigger — it processes all files that have arrived since the last checkpoint run, then the stream terminates. Ideal for scheduled Databricks Workflow jobs.',
+      q6: 'schemaLocation goes on readStream and stores the inferred column schema. checkpointLocation goes on writeStream and stores the streaming progress state — which files have been processed, offsets, and micro-batch metadata. Both are required and must be at separate paths.'
+    };
+    var quizTotal = Object.keys(quizExplanations).length;
+
+    document.querySelectorAll('.quiz-opt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var qId = btn.getAttribute('data-qid');
+        var isCorrect = btn.getAttribute('data-correct') === 'true';
+        if (quizAnswered[qId]) return;
+        quizAnswered[qId] = isCorrect ? 'correct' : 'wrong';
+        var block = document.getElementById(qId);
+        var feedback = document.getElementById(qId + '-feedback');
+        var allBtns = block.querySelectorAll('.quiz-opt');
+        allBtns.forEach(function(b) { b.disabled = true; });
+        if (isCorrect) {
+          btn.classList.add('correct'); block.classList.add('answered-correct');
+          feedback.textContent = '✓ Correct! ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-correct';
+        } else {
+          btn.classList.add('wrong'); block.classList.add('answered-wrong');
+          feedback.textContent = '✗ Not quite. ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-wrong';
+          allBtns.forEach(function(b) { if (b.getAttribute('data-correct') === 'true') { b.classList.add('correct'); b.style.opacity = '1'; } });
+        }
+        if (Object.keys(quizAnswered).length === quizTotal) {
+          var correct = Object.values(quizAnswered).filter(function(v) { return v === 'correct'; }).length;
+          var pct = Math.round((correct / quizTotal) * 100);
+          var emoji = pct === 100 ? '🏆' : pct >= 67 ? '💪' : '📖';
+          document.getElementById('score-text').textContent = emoji + ' You scored ' + correct + ' / ' + quizTotal + ' (' + pct + '%)';
+          document.getElementById('score-bar').style.display = 'flex';
+        }
+      });
+    });
+
+    function resetQuiz() {
+      quizAnswered = {};
+      document.querySelectorAll('.quiz-block').forEach(function(block) {
+        block.className = 'quiz-block';
+        var fb = block.querySelector('.quiz-feedback'); fb.textContent = ''; fb.className = 'quiz-feedback';
+        block.querySelectorAll('.quiz-opt').forEach(function(b) { b.disabled = false; b.classList.remove('correct', 'wrong'); b.style.opacity = ''; });
+      });
+      document.getElementById('score-bar').style.display = 'none';
+    }
+
+    // ── LISTEN (chunked — fixes Chrome silent-stop bug) ──
+    var listenChunks = [], listenActive = false;
+    function getBritishFemaleVoice() { var voices = speechSynthesis.getVoices(); var p = [function(v){return v.name==='Google UK English Female';},function(v){return v.name.indexOf('Serena')>-1;},function(v){return v.name.indexOf('Martha')>-1;},function(v){return v.name.indexOf('Kate')>-1;},function(v){return v.lang==='en-GB'&&v.name.toLowerCase().indexOf('female')>-1;},function(v){return v.lang==='en-GB'&&v.name.toLowerCase().indexOf('male')===-1;},function(v){return v.lang==='en-GB';}]; for (var i=0;i<p.length;i++){var f=voices.filter(p[i])[0];if(f)return f;} return null; }
+    function speakChunk(index) { if (!listenActive || index >= listenChunks.length) { stopListen(); return; } var utt = new SpeechSynthesisUtterance(listenChunks[index]); utt.rate = 0.93; utt.pitch = 1.05; utt.lang = 'en-GB'; var voice = getBritishFemaleVoice(); if (voice) utt.voice = voice; utt.onend = function() { if (listenActive) speakChunk(index + 1); }; utt.onerror = function(e) { if (e.error !== 'interrupted') stopListen(); }; speechSynthesis.speak(utt); }
+    function startListen() { var article = document.querySelector('article.article-body'); var rawText = article ? article.innerText : document.body.innerText; var sentences = rawText.match(/[^.!?\n]+[.!?\n]*/g) || [rawText]; listenChunks = []; var chunk = ''; for (var i = 0; i < sentences.length; i++) { chunk += sentences[i]; if (chunk.length >= 180 || i === sentences.length - 1) { if (chunk.trim()) listenChunks.push(chunk.trim()); chunk = ''; } } listenActive = true; document.getElementById('listenBtn').classList.add('playing'); document.getElementById('listenLabel').textContent = 'Stop'; var doSpeak = function() { speakChunk(0); }; if (speechSynthesis.getVoices().length > 0) { doSpeak(); } else { speechSynthesis.onvoiceschanged = function() { speechSynthesis.onvoiceschanged = null; doSpeak(); }; } }
+    function stopListen() { listenActive = false; speechSynthesis.cancel(); var btn = document.getElementById('listenBtn'); var label = document.getElementById('listenLabel'); if (btn) btn.classList.remove('playing'); if (label) label.textContent = 'Listen'; }
+    function toggleListen() { if (listenActive) { stopListen(); } else { startListen(); } }
+    window.addEventListener('beforeunload', function() { speechSynthesis.cancel(); });
+  </script>
+
+</body>
+</html>
