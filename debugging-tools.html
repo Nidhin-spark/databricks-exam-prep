@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Use Databricks' built-in debugging tools to troubleshoot a given issue — Databricks DE Associate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3250;
+      --text: #e8eaf6; --muted: #7c82a8; --accent: #ff3621; --accent2: #00c7b1;
+      --accent3: #ffa500; --heading-font: 'Georgia', serif;
+      --body-font: system-ui, -apple-system, sans-serif; --code-font: 'Courier New', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--body-font); font-size: 16px; line-height: 1.75; }
+
+    nav { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 2rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 100; }
+    .nav-brand { font-size: 0.85rem; font-weight: 600; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; text-transform: uppercase; }
+    .nav-brand span { color: var(--accent); }
+    .nav-right { display: flex; gap: 1rem; align-items: center; }
+    .nav-badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; font-size: 0.75rem; color: var(--muted); padding: 0.25rem 0.75rem; }
+    .listen-btn { display: flex; align-items: center; gap: 0.4rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; font-size: 0.75rem; font-family: var(--body-font); color: var(--muted); padding: 0.25rem 0.85rem; cursor: pointer; transition: border-color 0.2s, color 0.2s, background 0.2s; white-space: nowrap; }
+    .listen-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+    .listen-btn.playing { border-color: var(--accent2); color: var(--accent2); background: rgba(0,199,177,0.08); }
+    .listen-btn .listen-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .listen-btn.playing .listen-dot { animation: blink 1s ease infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+
+    .hero { max-width: 780px; margin: 4rem auto 0; padding: 0 2rem; }
+    .article-meta { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; color: var(--muted); padding: 0.2rem 0.6rem; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+    .tag.live { background: rgba(0,199,177,0.1); border-color: var(--accent2); color: var(--accent2); }
+    .tag.section { background: rgba(255,54,33,0.08); border-color: var(--accent); color: var(--accent); }
+    h1 { font-family: var(--heading-font); font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.2; color: #fff; margin-bottom: 1rem; }
+    .subtitle { font-size: 1.1rem; color: var(--muted); margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 2rem; }
+
+    .article-body { max-width: 780px; margin: 0 auto; padding: 0 2rem 5rem; }
+    h2 { font-family: var(--heading-font); font-size: 1.45rem; color: #fff; margin: 2.8rem 0 0.9rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 1.05rem; font-weight: 700; color: var(--text); margin: 2rem 0 0.6rem; }
+    p { margin-bottom: 1rem; color: #c8cce8; }
+
+    .callout { border-radius: 8px; padding: 1.2rem 1.4rem; margin: 1.5rem 0; border-left: 4px solid; font-size: 0.95rem; color: #c8cce8; }
+    .callout.blue   { background: rgba(99,131,255,0.07); border-color: #6383ff; }
+    .callout.green  { background: rgba(0,199,177,0.07);  border-color: var(--accent2); }
+    .callout.orange { background: rgba(255,165,0,0.07);  border-color: var(--accent3); }
+    .callout.red    { background: rgba(255,54,33,0.07);  border-color: var(--accent); }
+    .callout-title { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; }
+    .callout.blue   .callout-title { color: #6383ff; }
+    .callout.green  .callout-title { color: var(--accent2); }
+    .callout.orange .callout-title { color: var(--accent3); }
+    .callout.red    .callout-title { color: var(--accent); }
+
+    .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .concept-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.3rem; transition: border-color 0.2s; }
+    .concept-card:hover { border-color: var(--muted); }
+    .concept-card-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .concept-card h4 { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .concept-card p  { font-size: 0.85rem; color: var(--muted); margin: 0; }
+    .concept-card .keyword { display: inline-block; margin-top: 0.75rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; color: var(--accent2); padding: 0.2rem 0.5rem; font-family: var(--code-font); }
+
+    .compare-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.91rem; border-radius: 8px; overflow: hidden; }
+    .compare-table thead tr { background: var(--surface2); }
+    .compare-table th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    .compare-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: #c8cce8; vertical-align: top; }
+    .compare-table tr:last-child td { border-bottom: none; }
+    .compare-table tr:nth-child(odd) td { background: rgba(255,255,255,0.015); }
+
+    /* DECISION MAP */
+    .decision-map { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin: 1.5rem 0; }
+    .decision-map-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin-bottom: 1rem; }
+    .decision-row { display: flex; align-items: baseline; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .decision-row:last-child { border-bottom: none; }
+    .decision-symptom { color: #c8cce8; flex: 1.4; }
+    .decision-tool { color: var(--accent2); font-weight: 600; font-family: var(--code-font); font-size: 0.82rem; flex: 1; }
+    .decision-arrow { color: var(--muted); flex-shrink: 0; }
+
+    .spark-ui-tab { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-family: var(--code-font); font-size: 0.8rem; color: var(--accent3); padding: 0.15rem 0.55rem; margin: 0.1rem; }
+
+    .realworld { background: linear-gradient(135deg, rgba(255,165,0,0.06), rgba(255,54,33,0.04)); border: 1px solid rgba(255,165,0,0.2); border-radius: 10px; padding: 1.4rem; margin: 2rem 0; }
+    .realworld-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent3); font-weight: 700; margin-bottom: 0.6rem; }
+
+    .trap-list { list-style: none; padding: 0; margin: 0.75rem 0; }
+    .trap-list li { padding: 0.5rem 0 0.5rem 1.6rem; border-bottom: 1px solid var(--border); position: relative; font-size: 0.93rem; color: #c8cce8; }
+    .trap-list li:last-child { border-bottom: none; }
+    .trap-list li::before { content: "✗"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+    .progress-bar-wrap { background: var(--surface2); border-radius: 99px; height: 4px; overflow: hidden; margin-bottom: 2rem; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 99px; width: 15%; }
+
+    code { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 0.1em 0.4em; font-family: var(--code-font); font-size: 0.88em; color: #a8c0ff; }
+
+    .quiz-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin: 1rem 0; transition: border-color 0.3s; }
+    .quiz-block.answered-correct { border-color: #00c7b1; }
+    .quiz-block.answered-wrong   { border-color: var(--accent); }
+    .quiz-num { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 0.15rem 0.5rem; margin-right: 0.5rem; letter-spacing: 0.05em; vertical-align: middle; }
+    .quiz-q { font-weight: 600; color: var(--text); margin-bottom: 1rem; font-size: 0.97rem; line-height: 1.5; }
+    .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    @media (max-width: 500px) { .quiz-options { grid-template-columns: 1fr; } }
+    .quiz-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.88rem; padding: 0.65rem 1rem; cursor: pointer; text-align: left; transition: background 0.2s, border-color 0.2s, color 0.2s; font-family: var(--body-font); line-height: 1.4; }
+    .quiz-opt:hover:not(:disabled) { background: #2a2f4a; border-color: var(--muted); }
+    .quiz-opt.correct { background: rgba(0,199,177,0.15); border-color: var(--accent2); color: var(--accent2); font-weight: 600; }
+    .quiz-opt.wrong   { background: rgba(255,54,33,0.12);  border-color: var(--accent);  color: var(--accent); }
+    .quiz-opt:disabled { cursor: default; }
+    .quiz-opt.correct:disabled { opacity: 1; }
+    .quiz-feedback { margin-top: 0.9rem; font-size: 0.88rem; }
+    .quiz-feedback.show-correct { color: var(--accent2); padding: 0.6rem 0.9rem; background: rgba(0,199,177,0.07); border-radius: 6px; border-left: 3px solid var(--accent2); }
+    .quiz-feedback.show-wrong   { color: #ff8a7a; padding: 0.6rem 0.9rem; background: rgba(255,54,33,0.07); border-radius: 6px; border-left: 3px solid var(--accent); }
+    .quiz-score-bar { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    #score-text { font-weight: 600; font-size: 1rem; color: var(--text); }
+    .quiz-reset { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--muted); padding: 0.4rem 1rem; font-size: 0.85rem; cursor: pointer; font-family: var(--body-font); transition: border-color 0.2s, color 0.2s; }
+    .quiz-reset:hover { border-color: var(--muted); color: var(--text); }
+
+    .coffee-bar { text-align: center; padding: 2.5rem 2rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.88rem; }
+    .coffee-bar a { color: var(--accent2); text-decoration: none; font-weight: 600; }
+    .coffee-bar a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) { nav { padding: 1rem; } .hero, .article-body { padding-left: 1.2rem; padding-right: 1.2rem; } h1 { font-size: 1.6rem; } .decision-row { flex-direction: column; gap: 0.25rem; } }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-brand">Databricks <span>·</span> DE Associate</a>
+    <div class="nav-right">
+      <span class="nav-badge">Section 02 · Topic 5 of 5</span>
+      <button class="listen-btn" id="listenBtn" onclick="toggleListen()">
+        <span class="listen-dot"></span>
+        <span id="listenLabel">Listen</span>
+      </button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="article-meta">
+      <span class="tag section">Section 02</span>
+      <span class="tag live">Live</span>
+      <span class="tag">Development and Ingestion</span>
+    </div>
+    <h1>Use Databricks' built-in debugging tools to troubleshoot a given issue</h1>
+    <p class="subtitle">Spark UI, event logs, cluster logs, and the built-in debugger.</p>
+  </header>
+
+  <article class="article-body">
+
+    <div class="progress-bar-wrap"><div class="progress-bar-fill"></div></div>
+
+    <!-- CORE IDEA -->
+    <h2>The Core Idea</h2>
+    <p>When something goes wrong in a Databricks pipeline — a job is slow, a task fails, a cluster crashes — there are four distinct tools for diagnosing the problem. The exam tests whether you know <em>which tool to reach for</em> based on the symptom, and what each tool actually shows you.</p>
+    <p>Think of them as four layers of observability: the <strong>Spark UI</strong> for job and stage performance, <strong>event logs</strong> for historical Spark execution, <strong>cluster logs</strong> for infrastructure and driver errors, and the <strong>built-in debugger</strong> for interactive code-level inspection.</p>
+
+    <div class="callout blue">
+      <div class="callout-title">Exam Mindset</div>
+      Every debugging question gives you a symptom and asks which tool to use. Map symptom → tool before reading the options. Slow query = Spark UI. Cluster crashed = cluster logs. Past job failure = event logs. Code logic error in notebook = built-in debugger.
+    </div>
+
+    <!-- QUICK DECISION MAP -->
+    <h2>Quick Decision Map</h2>
+    <p>Use this as your first pass on any exam debugging scenario:</p>
+
+    <div class="decision-map">
+      <div class="decision-map-title">Symptom → Tool</div>
+      <div class="decision-row">
+        <span class="decision-symptom">A job is running slow — I need to find the bottleneck</span>
+        <span class="decision-arrow">→</span>
+        <span class="decision-tool">Spark UI</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-symptom">A stage has massive data skew across tasks</span>
+        <span class="decision-arrow">→</span>
+        <span class="decision-tool">Spark UI · Stages tab</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-symptom">I need to see what happened in a job that already completed</span>
+        <span class="decision-arrow">→</span>
+        <span class="decision-tool">Event Logs</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-symptom">The cluster terminated unexpectedly — I need to know why</span>
+        <span class="decision-arrow">→</span>
+        <span class="decision-tool">Cluster Logs · Driver logs</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-symptom">A library failed to install at cluster startup</span>
+        <span class="decision-arrow">→</span>
+        <span class="decision-tool">Cluster Logs · Init script logs</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-symptom">A worker node is throwing OOM errors</span>
+        <span class="decision-arrow">→</span>
+        <span class="decision-tool">Cluster Logs · Executor logs</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-symptom">I want to step through notebook code and inspect variables</span>
+        <span class="decision-arrow">→</span>
+        <span class="decision-tool">Built-in Debugger</span>
+      </div>
+      <div class="decision-row">
+        <span class="decision-symptom">A UDF is returning wrong values on specific rows</span>
+        <span class="decision-arrow">→</span>
+        <span class="decision-tool">Built-in Debugger</span>
+      </div>
+    </div>
+
+    <!-- SPARK UI -->
+    <h2>1. The Spark UI</h2>
+    <p>The Spark UI is the primary tool for understanding job performance. It gives you a live, structured view of every job, stage, and task running on the cluster — showing exactly where time is being spent and where problems are occurring.</p>
+    <p>You access it from the <strong>Clusters page → Spark UI button</strong>, or directly from a running notebook via the cluster link at the top.</p>
+
+    <h3>The Key Tabs and What They Show</h3>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-card-icon">📋</div>
+        <h4>Jobs Tab</h4>
+        <p>Lists every Spark action triggered. Shows duration, status, and number of stages. Start here to find which job is slow.</p>
+        <span class="keyword">top-level timing</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🔢</div>
+        <h4>Stages Tab</h4>
+        <p>Breaks each job into stages. Shows shuffle read/write, spill to disk, and task distribution. Key for finding skew and shuffles.</p>
+        <span class="keyword">skew · shuffle · spill</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🗂️</div>
+        <h4>Tasks Tab</h4>
+        <p>Individual task timings within a stage. A few tasks taking much longer than others = data skew.</p>
+        <span class="keyword">task-level skew</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🗺️</div>
+        <h4>DAG Visualisation</h4>
+        <p>Shows the lineage of transformations as a directed acyclic graph. Helps spot unnecessary wide transformations and shuffle points.</p>
+        <span class="keyword">DAG · wide transforms</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">💾</div>
+        <h4>Storage Tab</h4>
+        <p>Shows cached RDDs and DataFrames — size in memory, on-disk spill, and fraction cached. Check here if caching isn't working.</p>
+        <span class="keyword">cache · persist</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🌐</div>
+        <h4>Environment Tab</h4>
+        <p>Shows all Spark configuration properties, system properties, and classpath. Useful for confirming config settings took effect.</p>
+        <span class="keyword">spark config</span>
+      </div>
+    </div>
+
+    <h3>The Three Performance Problems to Spot in the Spark UI</h3>
+
+    <table class="compare-table">
+      <thead><tr><th>Problem</th><th>Where to look</th><th>What you'll see</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Data Skew</strong></td>
+          <td>Stages tab → Tasks</td>
+          <td>Most tasks finish in 1s, but 1–2 tasks take 5+ minutes. Task duration bar chart is heavily uneven.</td>
+        </tr>
+        <tr>
+          <td><strong>Shuffle Spill</strong></td>
+          <td>Stages tab → Shuffle Write / Spill columns</td>
+          <td>Large values in "Shuffle Spill (Disk)" column. Means executor ran out of memory and spilled to disk.</td>
+        </tr>
+        <tr>
+          <td><strong>Unnecessary Shuffles</strong></td>
+          <td>DAG Visualisation</td>
+          <td>Wide transformations (joins, groupBy) creating extra stages. Repartition or broadcast joins may help.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout red">
+      <div class="callout-title">Exam trap — Spark UI availability</div>
+      The Spark UI is only available while the cluster is <strong>running</strong>. Once the cluster is terminated, you must use <strong>event logs</strong> to inspect past execution. This is a very common exam distinction.
+    </div>
+
+    <!-- EVENT LOGS -->
+    <h2>2. Event Logs</h2>
+    <p>Event logs are the <strong>persistent, historical record</strong> of Spark execution. When a cluster is terminated and the Spark UI is gone, event logs are how you reconstruct what happened during a job run.</p>
+    <p>Databricks automatically writes event logs to a configured storage location (DBFS or cloud storage). They can be replayed in the <strong>Spark History Server</strong> — which looks identical to the live Spark UI but shows completed jobs.</p>
+
+    <h3>Event logs vs. Spark UI</h3>
+    <table class="compare-table">
+      <thead><tr><th></th><th>Spark UI</th><th>Event Logs / History Server</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Available when</strong></td><td>Cluster is running</td><td>Always — even after cluster termination</td></tr>
+        <tr><td><strong>Data shown</strong></td><td>Live and recent jobs</td><td>Historical completed jobs</td></tr>
+        <tr><td><strong>Access via</strong></td><td>Cluster page → Spark UI</td><td>Spark History Server or event log files</td></tr>
+        <tr><td><strong>Storage</strong></td><td>In-memory on driver</td><td>Persisted to DBFS or cloud storage</td></tr>
+        <tr><td><strong>Best for</strong></td><td>Live debugging</td><td>Post-mortem analysis of completed/failed jobs</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout green">
+      <div class="callout-title">Key exam point</div>
+      If an exam question describes a job that <strong>already completed or failed</strong> and asks how to investigate — the answer is <strong>event logs</strong>, not the Spark UI. The Spark UI would no longer be available if the cluster was terminated after the run.
+    </div>
+
+    <!-- CLUSTER LOGS -->
+    <h2>3. Cluster Logs</h2>
+    <p>Cluster logs capture everything happening at the <strong>infrastructure level</strong> — driver output, executor errors, library installations, and init script execution. When the issue is at the cluster level rather than the Spark job level, this is where you look.</p>
+    <p>Cluster logs are configured to deliver to a DBFS path or cloud storage location, set in the cluster's <strong>Advanced Options → Logging</strong> settings.</p>
+
+    <h3>Types of Cluster Logs</h3>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-card-icon">🚗</div>
+        <h4>Driver Logs</h4>
+        <p>Standard output and error from the driver node. Contains Python exceptions, print statements, and stack traces from your notebook or job code.</p>
+        <span class="keyword">stdout · stderr</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">⚙️</div>
+        <h4>Executor Logs</h4>
+        <p>Logs from individual worker nodes. OOM errors, task failures, and worker-side exceptions appear here — not in the driver logs.</p>
+        <span class="keyword">OOM · worker errors</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">🚀</div>
+        <h4>Init Script Logs</h4>
+        <p>Output from cluster init scripts. If a library install or environment setup fails at cluster start, the error will be here.</p>
+        <span class="keyword">install failures</span>
+      </div>
+      <div class="concept-card">
+        <div class="concept-card-icon">📦</div>
+        <h4>Log4j Logs</h4>
+        <p>Detailed internal Spark framework logs. Used for deep debugging of Spark internals — rarely needed for application-level issues.</td>
+        <span class="keyword">spark internals</span>
+      </div>
+    </div>
+
+    <div class="callout orange">
+      <div class="callout-title">Key exam point — driver vs. executor logs</div>
+      <strong>Driver logs</strong> contain your application code errors — Python exceptions, stack traces, print output. <strong>Executor logs</strong> contain worker-side errors — OOM on tasks, shuffle failures, task-level exceptions. Knowing which is which is a direct exam question.
+    </div>
+
+    <div class="realworld">
+      <div class="realworld-label">🏗️ Real-world note</div>
+      <p style="margin:0;font-size:0.93rem;">In practice, the most common cluster log use case is init script failures — a cluster refuses to start because a custom library install failed. The error is silent in the UI (cluster just shows as "failed to start") but the init script log will have the exact pip error or dependency conflict. Always check init script logs first when a cluster won't start.</p>
+    </div>
+
+    <!-- BUILT-IN DEBUGGER -->
+    <h2>4. The Built-in Debugger</h2>
+    <p>The Databricks notebook has a built-in Python debugger that lets you pause execution mid-cell, step through code line by line, and inspect variable values in real time — without leaving the notebook interface.</p>
+    <p>It is activated using the standard Python <code>breakpoint()</code> function (Python 3.7+) or the older <code>pdb.set_trace()</code>. When execution hits a breakpoint, an interactive debug console appears at the bottom of the cell.</p>
+
+    <h3>What you can do in the debugger</h3>
+
+    <table class="compare-table">
+      <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>n</code></td><td>Next line — step to the next line without entering function calls</td></tr>
+        <tr><td><code>s</code></td><td>Step into — enter a function call and debug inside it</td></tr>
+        <tr><td><code>c</code></td><td>Continue — resume execution until the next breakpoint or end</td></tr>
+        <tr><td><code>p variable</code></td><td>Print — inspect the current value of any variable</td></tr>
+        <tr><td><code>l</code></td><td>List — show the surrounding source code lines</td></tr>
+        <tr><td><code>q</code></td><td>Quit — exit the debugger and stop execution</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout green">
+      <div class="callout-title">When to use the built-in debugger</div>
+      The debugger is best for <strong>logic errors in Python code</strong> — a transformation returning unexpected values, a UDF behaving incorrectly on certain rows, or a function that isn't doing what you think it is. It is not useful for Spark performance problems — use the Spark UI for those.
+    </div>
+
+    <div class="callout red">
+      <div class="callout-title">Exam trap — debugger scope</div>
+      The built-in debugger works on <strong>Python driver-side code</strong> only. You cannot use it to step through code that runs on executor nodes (e.g. inside a UDF that gets distributed). For executor-side issues, use executor logs or add explicit logging.
+    </div>
+
+    <!-- FULL TOOL COMPARISON -->
+    <h2>Full Tool Comparison</h2>
+
+    <table class="compare-table">
+      <thead><tr><th>Tool</th><th>Best for</th><th>Available when</th><th>Access</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Spark UI</strong></td>
+          <td>Live performance — skew, spill, slow stages, DAG inspection</td>
+          <td>Cluster running only</td>
+          <td>Clusters page → Spark UI</td>
+        </tr>
+        <tr>
+          <td><strong>Event Logs</strong></td>
+          <td>Historical analysis of completed/failed jobs after cluster terminates</td>
+          <td>Always (persisted to storage)</td>
+          <td>Spark History Server / DBFS</td>
+        </tr>
+        <tr>
+          <td><strong>Cluster Logs</strong></td>
+          <td>Cluster-level errors — driver crashes, OOM, init script failures</td>
+          <td>Always (delivered to log path)</td>
+          <td>Cluster page → View Logs / DBFS log path</td>
+        </tr>
+        <tr>
+          <td><strong>Built-in Debugger</strong></td>
+          <td>Python logic errors — step through, inspect variables</td>
+          <td>During interactive notebook execution</td>
+          <td><code>breakpoint()</code> in a notebook cell</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- EXAM QUESTIONS -->
+    <h2>Exam-Style Practice Questions</h2>
+    <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1.5rem;">Select an answer — green means correct, red means wrong.</p>
+
+    <div class="quiz-block" id="q1">
+      <div class="quiz-q"><span class="quiz-num">Q1</span> A Spark job completed successfully but took much longer than expected. The cluster is still running. Which tool should the data engineer use first to identify the bottleneck?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Cluster logs</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="true">Spark UI</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Event logs</button>
+        <button class="quiz-opt" data-qid="q1" data-correct="false">Built-in debugger</button>
+      </div>
+      <div class="quiz-feedback" id="q1-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q2">
+      <div class="quiz-q"><span class="quiz-num">Q2</span> A scheduled overnight job failed. The cluster has since been terminated. How can the data engineer investigate the Spark execution?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q2" data-correct="false">Spark UI — it retains data after termination</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="true">Event logs via the Spark History Server</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">Built-in debugger on the next run</button>
+        <button class="quiz-opt" data-qid="q2" data-correct="false">Cluster logs only</button>
+      </div>
+      <div class="quiz-feedback" id="q2-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q3">
+      <div class="quiz-q"><span class="quiz-num">Q3</span> In the Spark UI Stages tab, most tasks in a stage complete in under 2 seconds, but three tasks are taking over 10 minutes. What does this indicate?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q3" data-correct="false">Shuffle spill to disk</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">A missing checkpoint</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="true">Data skew — a few partitions contain disproportionately more data</button>
+        <button class="quiz-opt" data-qid="q3" data-correct="false">An executor OOM error</button>
+      </div>
+      <div class="quiz-feedback" id="q3-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q4">
+      <div class="quiz-q"><span class="quiz-num">Q4</span> A cluster fails to start after a new init script was added. Where should the engineer look to find the error?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Spark UI — Jobs tab</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Event logs</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="true">Cluster logs — init script logs</button>
+        <button class="quiz-opt" data-qid="q4" data-correct="false">Built-in debugger</button>
+      </div>
+      <div class="quiz-feedback" id="q4-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q5">
+      <div class="quiz-q"><span class="quiz-num">Q5</span> A data engineer wants to pause execution inside a notebook cell and inspect the value of a variable mid-run. Which tool do they use?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q5" data-correct="false">Spark UI — Environment tab</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">Cluster logs — driver logs</button>
+        <button class="quiz-opt" data-qid="q5" data-correct="true">Built-in debugger using <code>breakpoint()</code></button>
+        <button class="quiz-opt" data-qid="q5" data-correct="false">Event logs</button>
+      </div>
+      <div class="quiz-feedback" id="q5-feedback"></div>
+    </div>
+
+    <div class="quiz-block" id="q6">
+      <div class="quiz-q"><span class="quiz-num">Q6</span> Worker nodes are throwing OutOfMemoryError during a large shuffle operation. Which log type contains these errors?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Driver logs</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Init script logs</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="false">Event logs</button>
+        <button class="quiz-opt" data-qid="q6" data-correct="true">Executor logs</button>
+      </div>
+      <div class="quiz-feedback" id="q6-feedback"></div>
+    </div>
+
+    <div class="quiz-score-bar" id="score-bar" style="display:none;">
+      <span id="score-text"></span>
+      <button class="quiz-reset" onclick="resetQuiz()">↺ Try Again</button>
+    </div>
+
+    <!-- EXAM TRAPS -->
+    <h2>Common Exam Traps</h2>
+    <p>These are the mistakes the exam is designed to catch:</p>
+    <ul class="trap-list">
+      <li>Using the Spark UI for a terminated cluster — it is unavailable once the cluster is gone. Use event logs instead.</li>
+      <li>Confusing driver logs and executor logs — driver logs have your Python exceptions; executor logs have OOM and worker-side errors.</li>
+      <li>Using the debugger for Spark performance issues — the debugger is for Python logic errors, not query performance.</li>
+      <li>Thinking event logs are only for errors — they record all Spark execution, successful or not, and are used for post-mortem analysis of any completed job.</li>
+      <li>Forgetting that the built-in debugger only works on driver-side Python — code running inside distributed UDFs cannot be stepped through.</li>
+      <li>Ignoring init script logs when a cluster won't start — library install failures always surface here, not in the Spark UI.</li>
+    </ul>
+
+    <div class="callout orange">
+      <div class="callout-title">⚡ Quick Memory Trick</div>
+      <strong>Slow job running now → Spark UI. Job already finished → Event Logs. Cluster won't start → Cluster Logs. Wrong logic in my code → Debugger.</strong> Four symptoms, four tools, one rule each.
+    </div>
+
+  </article>
+
+  <footer class="coffee-bar">
+    All articles are completely free — but a £3 coffee keeps me publishing!<br>
+    <a href="https://ko-fi.com/nidhin">☕ Buy me a coffee</a>
+  </footer>
+
+  <script>
+    var quizAnswered = {};
+    var quizExplanations = {
+      q1: 'The Spark UI is the right first tool for a live performance investigation. The cluster is still running so the UI is available. Start with the Jobs tab, drill into Stages, and look for slow tasks, shuffle spill, or data skew.',
+      q2: 'Once a cluster is terminated, the Spark UI is gone. Event logs are persisted to storage and can be replayed in the Spark History Server — giving you the same view of stages, tasks, and DAGs for any completed job.',
+      q3: 'When a small number of tasks take much longer than the rest, it is a classic sign of data skew — certain partitions contain far more rows than others. The fix is usually salting, repartitioning, or a broadcast join.',
+      q4: 'Init script failures appear in the cluster logs under the init script log section. The Spark UI will not even be available since the cluster never started successfully.',
+      q5: 'The built-in debugger is activated by calling breakpoint() in a notebook cell. It pauses execution and opens an interactive pdb console where you can step through code and inspect variable values.',
+      q6: 'OOM errors on worker nodes appear in executor logs — one log file per executor. Driver logs only contain errors from code running on the driver node, not from distributed task execution on workers.'
+    };
+    var quizTotal = Object.keys(quizExplanations).length;
+
+    document.querySelectorAll('.quiz-opt').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var qId = btn.getAttribute('data-qid');
+        var isCorrect = btn.getAttribute('data-correct') === 'true';
+        if (quizAnswered[qId]) return;
+        quizAnswered[qId] = isCorrect ? 'correct' : 'wrong';
+        var block = document.getElementById(qId);
+        var feedback = document.getElementById(qId + '-feedback');
+        var allBtns = block.querySelectorAll('.quiz-opt');
+        allBtns.forEach(function(b) { b.disabled = true; });
+        if (isCorrect) {
+          btn.classList.add('correct'); block.classList.add('answered-correct');
+          feedback.textContent = '✓ Correct! ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-correct';
+        } else {
+          btn.classList.add('wrong'); block.classList.add('answered-wrong');
+          feedback.textContent = '✗ Not quite. ' + quizExplanations[qId];
+          feedback.className = 'quiz-feedback show-wrong';
+          allBtns.forEach(function(b) { if (b.getAttribute('data-correct') === 'true') { b.classList.add('correct'); b.style.opacity = '1'; } });
+        }
+        if (Object.keys(quizAnswered).length === quizTotal) {
+          var correct = Object.values(quizAnswered).filter(function(v) { return v === 'correct'; }).length;
+          var pct = Math.round((correct / quizTotal) * 100);
+          var emoji = pct === 100 ? '🏆' : pct >= 67 ? '💪' : '📖';
+          document.getElementById('score-text').textContent = emoji + ' You scored ' + correct + ' / ' + quizTotal + ' (' + pct + '%)';
+          document.getElementById('score-bar').style.display = 'flex';
+        }
+      });
+    });
+
+    function resetQuiz() {
+      quizAnswered = {};
+      document.querySelectorAll('.quiz-block').forEach(function(block) {
+        block.className = 'quiz-block';
+        var fb = block.querySelector('.quiz-feedback'); fb.textContent = ''; fb.className = 'quiz-feedback';
+        block.querySelectorAll('.quiz-opt').forEach(function(b) { b.disabled = false; b.classList.remove('correct', 'wrong'); b.style.opacity = ''; });
+      });
+      document.getElementById('score-bar').style.display = 'none';
+    }
+
+    // ── LISTEN (chunked — fixes Chrome silent-stop bug) ──
+    var listenChunks = [], listenActive = false;
+    function getBritishFemaleVoice() { var voices = speechSynthesis.getVoices(); var p = [function(v){return v.name==='Google UK English Female';},function(v){return v.name.indexOf('Serena')>-1;},function(v){return v.name.indexOf('Martha')>-1;},function(v){return v.name.indexOf('Kate')>-1;},function(v){return v.lang==='en-GB'&&v.name.toLowerCase().indexOf('female')>-1;},function(v){return v.lang==='en-GB'&&v.name.toLowerCase().indexOf('male')===-1;},function(v){return v.lang==='en-GB';}]; for (var i=0;i<p.length;i++){var f=voices.filter(p[i])[0];if(f)return f;} return null; }
+    function speakChunk(index) { if (!listenActive || index >= listenChunks.length) { stopListen(); return; } var utt = new SpeechSynthesisUtterance(listenChunks[index]); utt.rate = 0.93; utt.pitch = 1.05; utt.lang = 'en-GB'; var voice = getBritishFemaleVoice(); if (voice) utt.voice = voice; utt.onend = function() { if (listenActive) speakChunk(index + 1); }; utt.onerror = function(e) { if (e.error !== 'interrupted') stopListen(); }; speechSynthesis.speak(utt); }
+    function startListen() { var article = document.querySelector('article.article-body'); var rawText = article ? article.innerText : document.body.innerText; var sentences = rawText.match(/[^.!?\n]+[.!?\n]*/g) || [rawText]; listenChunks = []; var chunk = ''; for (var i = 0; i < sentences.length; i++) { chunk += sentences[i]; if (chunk.length >= 180 || i === sentences.length - 1) { if (chunk.trim()) listenChunks.push(chunk.trim()); chunk = ''; } } listenActive = true; document.getElementById('listenBtn').classList.add('playing'); document.getElementById('listenLabel').textContent = 'Stop'; var doSpeak = function() { speakChunk(0); }; if (speechSynthesis.getVoices().length > 0) { doSpeak(); } else { speechSynthesis.onvoiceschanged = function() { speechSynthesis.onvoiceschanged = null; doSpeak(); }; } }
+    function stopListen() { listenActive = false; speechSynthesis.cancel(); var btn = document.getElementById('listenBtn'); var label = document.getElementById('listenLabel'); if (btn) btn.classList.remove('playing'); if (label) label.textContent = 'Listen'; }
+    function toggleListen() { if (listenActive) { stopListen(); } else { startListen(); } }
+    window.addEventListener('beforeunload', function() { speechSynthesis.cancel(); });
+  </script>
+
+</body>
+</html>
