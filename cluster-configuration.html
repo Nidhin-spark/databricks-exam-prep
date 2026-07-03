@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Databricks Associate Exam: Classify Cluster Type &amp; Configuration for Optimal Performance</title>
+<meta name="description" content="All-purpose vs. job clusters, autoscaling, spot instances, and driver/worker sizing — how to classify Databricks compute and configure it for cost and performance. Written for the Databricks Certified Data Engineer Associate exam.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --bg-2:#0f0f0f;
+    --card:#121211;
+    --card-2:#161615;
+    --line:#242422;
+    --line-2:#2e2e2b;
+    --ink:#ededea;
+    --ink-2:#c7c6c1;
+    --mut:#8f8e88;
+    --mut-2:#6f6e68;
+    --accent:#ff4d1c;
+    --accent-soft:rgba(255,77,28,.10);
+    --accent-line:rgba(255,77,28,.28);--live:#35c9a8;--live-line:rgba(53,201,168,.5);
+    --driver:#e0b13c;
+    --worker:#5aa9d6;
+    --ok:#57b56a;
+    --warn:#e0b13c;
+    --serif:"IBM Plex Serif",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --disp:"Syne",sans-serif;
+    --maxw:820px;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink-2);
+    font-family:var(--serif);
+    font-size:18px;
+    line-height:1.72;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+    background-size:52px 52px;
+    background-position:center top;
+  }
+
+  a{color:inherit}
+  .accent{color:var(--accent)}
+  em{font-style:italic}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    background:rgba(10,10,10,.72);
+    backdrop-filter:blur(8px);
+    position:sticky;top:0;z-index:50;
+  }
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .brand{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);text-decoration:none;display:flex;align-items:center;gap:10px}
+  .brand b{color:var(--ink);font-weight:600}
+  .brand .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+  .topbar .sec{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut-2)}
+
+  /* ---------- hero ---------- */
+  header.hero{padding:70px 0 40px;border-bottom:1px solid var(--line)}
+  .back{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--mut);text-decoration:none;display:inline-flex;gap:8px;align-items:center;margin-bottom:34px;transition:color .2s}
+  .back:hover{color:var(--accent)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:22px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .eyebrow .sep{color:var(--mut-2)}
+  .eyebrow .plain{color:var(--mut)}
+  h1{font-family:var(--disp);font-weight:800;color:var(--ink);font-size:clamp(34px,6vw,56px);line-height:1.04;letter-spacing:-.02em;margin:0 0 26px}
+  h1 em{font-family:var(--serif);font-weight:500;font-style:italic;color:var(--accent);letter-spacing:-.01em}
+  .deck{font-size:20px;line-height:1.6;color:var(--ink-2);max-width:70ch;margin:0 0 30px}
+  .meta{display:flex;flex-wrap:wrap;gap:26px;padding-top:10px}
+  .meta div{font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--mut)}
+  .meta b{display:block;color:var(--ink);font-size:14px;letter-spacing:.02em;margin-top:3px;font-weight:600}
+
+  /* ---------- toc ---------- */
+  nav.toc{margin:44px 0;border:1px solid var(--line);border-radius:2px;background:linear-gradient(180deg,var(--card),var(--bg-2));padding:26px 30px}
+  nav.toc h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin:0 0 18px;font-weight:500}
+  nav.toc ol{margin:0;padding:0;list-style:none;counter-reset:toc}
+  nav.toc li{counter-increment:toc;border-top:1px solid var(--line)}
+  nav.toc li:first-child{border-top:none}
+  nav.toc a{display:flex;gap:16px;align-items:baseline;padding:11px 0;text-decoration:none;color:var(--ink-2);font-size:16px;transition:color .18s,padding .18s}
+  nav.toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--mut-2);min-width:26px;transition:color .18s}
+  nav.toc a:hover{color:var(--accent);padding-left:6px}
+  nav.toc a:hover::before{color:var(--accent)}
+
+  /* ---------- sections ---------- */
+  section{padding:20px 0}
+  h2.sec{font-family:var(--disp);font-weight:700;color:var(--ink);font-size:clamp(26px,4vw,34px);line-height:1.12;letter-spacing:-.015em;margin:52px 0 8px;scroll-margin-top:80px;display:flex;gap:16px;align-items:baseline}
+  h2.sec .n{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--accent);letter-spacing:0}
+  h3{font-family:var(--disp);font-weight:600;color:var(--ink);font-size:22px;letter-spacing:-.01em;margin:38px 0 6px}
+  h4{font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:34px 0 8px;font-weight:600}
+  p{margin:16px 0}
+  strong{color:var(--ink);font-weight:600}
+  code{font-family:var(--mono);font-size:.86em;background:var(--card-2);border:1px solid var(--line);padding:1px 6px;border-radius:3px;color:#f1cbb8}
+
+  ul,ol.body{margin:16px 0;padding-left:0;list-style:none}
+  ul li,ol.body li{position:relative;padding-left:26px;margin:10px 0}
+  ul li::before{content:"";position:absolute;left:2px;top:.62em;width:7px;height:7px;background:var(--accent);border-radius:1px}
+  ol.body{counter-reset:b}
+  ol.body li{counter-increment:b}
+  ol.body li::before{content:counter(b);position:absolute;left:0;top:0;font-family:var(--mono);font-size:13px;color:var(--accent)}
+
+  blockquote{margin:34px 0;padding:6px 0 6px 28px;border-left:2px solid var(--accent);font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.5;color:var(--ink)}
+
+  /* ---------- code blocks ---------- */
+  .code{margin:24px 0;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:#0c0c0b}
+  .code .bar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--card-2);border-bottom:1px solid var(--line)}
+  .code .bar .lang{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .code .bar .desc{font-family:var(--mono);font-size:11px;color:var(--mut-2);letter-spacing:.02em}
+  .code pre{margin:0;padding:18px 16px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.65;color:#d7d6d0}
+  .code pre .c{color:#6f6e68;font-style:italic}
+  .code pre .k{color:#ff7a52;font-weight:500}
+  .code pre .s{color:#c8b48a}
+  .code pre .f{color:#9ec7e0}
+
+  /* ---------- callouts ---------- */
+  .box{margin:26px 0;border:1px solid var(--line);border-left-width:2px;border-radius:3px;padding:18px 22px;background:var(--card)}
+  .box .h{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;font-weight:600;display:flex;gap:8px;align-items:center}
+  .box p{margin:6px 0 0;font-size:16.5px;line-height:1.62}
+  .box.exam{border-left-color:var(--accent)} .box.exam .h{color:var(--accent)}
+  .box.trap{border-left-color:#e06b3c} .box.trap .h{color:#e06b3c}
+  .box.pit{border-left-color:var(--warn)} .box.pit .h{color:var(--warn)}
+  .box.tip{border-left-color:var(--ok)} .box.tip .h{color:var(--ok)}
+  .box.note{border-left-color:var(--mut)} .box.note .h{color:var(--mut)}
+
+  /* ---------- cluster anatomy (signature) ---------- */
+  .cluster{margin:34px 0;border:1px solid var(--line);border-radius:3px;background:linear-gradient(180deg,var(--card),var(--bg-2));padding:30px 24px}
+  .cluster .cap{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);text-align:center;margin-bottom:26px}
+  .node{border:1px solid var(--line-2);border-radius:3px;background:var(--card-2);padding:16px 16px;position:relative}
+  .node .tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:6px}
+  .node h5{font-family:var(--disp);font-weight:700;font-size:17px;margin:0 0 6px;color:var(--ink)}
+  .node p{font-family:var(--serif);font-size:13.5px;line-height:1.5;color:var(--mut);margin:0}
+  .node.driver{border-top:2px solid var(--driver);max-width:340px;margin:0 auto 8px} .node.driver .tag{color:var(--driver)}
+  .node.worker{border-top:2px solid var(--worker)} .node.worker .tag{color:var(--worker)}
+  .conn{text-align:center;color:var(--mut-2);font-family:var(--mono);font-size:18px;line-height:1;margin:2px 0 10px}
+  .workers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .cluster .scaleline{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--mut-2);text-align:center}
+  .cluster .scaleline b{color:var(--worker)}
+  @media(max-width:600px){.workers{grid-template-columns:1fr}}
+
+  /* ---------- table ---------- */
+  .tablewrap{margin:26px 0;overflow-x:auto;border:1px solid var(--line);border-radius:3px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}
+  th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);background:var(--card-2);font-weight:600}
+  tbody th{font-family:var(--serif);color:var(--ink);font-weight:600;background:var(--bg-2);white-space:nowrap}
+  td{color:var(--ink-2)}
+  tbody tr:last-child th,tbody tr:last-child td{border-bottom:none}
+  .ap-col{color:var(--driver)!important;font-weight:600}
+  .job-col{color:var(--worker)!important;font-weight:600}
+
+  /* ---------- practice questions ---------- */
+  .pq{margin:22px 0;border:1px solid var(--line);border-radius:3px;background:var(--card);overflow:hidden}
+  .pq .qh{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);padding:14px 20px 0}
+  .pq .q{padding:6px 20px 4px;font-size:17px;color:var(--ink);line-height:1.55}
+  .pq .opts{list-style:none;margin:8px 0 4px;padding:0 20px}
+  .pq .opts li{padding:7px 0 7px 30px;position:relative;font-size:16px;color:var(--ink-2)}
+  .pq .opts li span{position:absolute;left:0;font-family:var(--mono);font-size:13px;color:var(--mut)}
+  .pq .opts li::before{display:none}
+  details.rev{border-top:1px solid var(--line);margin-top:8px}
+  details.rev summary{list-style:none;cursor:pointer;padding:13px 20px;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:10px;transition:color .18s,background .18s}
+  details.rev summary::-webkit-details-marker{display:none}
+  details.rev summary::before{content:"▸";color:var(--accent);transition:transform .18s}
+  details.rev[open] summary::before{transform:rotate(90deg)}
+  details.rev summary:hover{color:var(--accent);background:var(--accent-soft)}
+  details.rev .ans{padding:2px 20px 20px}
+  details.rev .ans .verdict{font-family:var(--mono);font-size:14px;color:var(--ok);font-weight:600;letter-spacing:.04em;margin:6px 0 10px}
+  details.rev .ans p{margin:0;font-size:16px;color:var(--ink-2);line-height:1.6}
+
+  /* ---------- cheat sheet ---------- */
+  .cheat{margin:30px 0;border:1px solid var(--accent-line);border-radius:3px;overflow:hidden}
+  .cheat .ch{background:var(--accent-soft);border-bottom:1px solid var(--accent-line);padding:16px 22px;font-family:var(--disp);font-weight:700;font-size:19px;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+  .cheat .ch span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase;font-weight:500}
+  .cheat .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+  .cheat .cell{background:var(--card);padding:18px 20px}
+  .cheat .cell .t{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;font-weight:600}
+  .cheat .cell p{margin:0;font-size:15px;line-height:1.55;color:var(--ink-2)}
+  .cheat .cell code{font-size:.82em}
+  @media(max-width:600px){.cheat .grid{grid-template-columns:1fr}}
+
+  hr.rule{border:none;border-top:1px solid var(--line);margin:40px 0}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--line);margin-top:70px;padding:46px 0 30px;background:var(--bg-2)}
+  .footmeta{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--mut);line-height:1.9}
+  .footmeta a{color:var(--accent);text-decoration:none}
+  .footmeta a:hover{text-decoration:underline}
+  .coffee{margin:34px 0 0;border:1px solid var(--line);border-radius:3px;background:linear-gradient(180deg,var(--card),var(--bg-2));padding:26px;text-align:center}
+  .coffee h3{font-family:var(--disp);font-weight:700;color:var(--ink);font-size:22px;margin:0 0 6px}
+  .coffee p{margin:0 0 18px;font-size:16px;color:var(--mut)}
+  .coffee a.btn{display:inline-block;font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-decoration:none;background:var(--accent);color:#0a0a0a;font-weight:600;padding:12px 24px;border-radius:3px;transition:transform .15s,filter .15s}
+  .coffee a.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+
+  /* --- hero badges (match live template) --- */
+  header.hero h1{font-family:var(--serif);font-weight:700;letter-spacing:-.012em}
+  header.hero h1 em{font-family:var(--serif);font-weight:600;font-style:italic;color:var(--accent)}
+  .badges{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:26px}
+  .badge{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;padding:7px 13px;border:1px solid;border-radius:7px;line-height:1;white-space:nowrap}
+  .badge.section{color:var(--accent);border-color:rgba(255,77,28,.55);background:transparent}
+  .badge.live{color:var(--live);border-color:var(--live-line);background:transparent}
+  .badge.name{color:var(--mut);border-color:rgba(255,255,255,.14);background:var(--card-2)}
+  /* --- topbar right: topic pill + listen --- */
+  .topbar .right{display:flex;align-items:center;gap:12px}
+  .topbar .pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--mut);border:1px solid var(--line-2);border-radius:22px;padding:6px 14px;white-space:nowrap}
+  .listen-btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);border:1px solid var(--line-2);border-radius:22px;padding:6px 14px;background:transparent;cursor:pointer;transition:border-color .18s,color .18s}
+  .listen-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .listen-btn .ldot{width:7px;height:7px;border-radius:50%;background:var(--mut);transition:background .18s}
+  .listen-btn.playing{border-color:var(--accent);color:var(--accent)}
+  .listen-btn.playing .ldot{background:var(--accent);animation:lpulse 1.2s ease-in-out infinite}
+  @keyframes lpulse{50%{opacity:.3}}
+  @media(max-width:720px){.topbar .pill{display:none}}
+  @media(max-width:520px){.brand{font-size:0}.brand .dot{font-size:12px}}
+
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="brand" href="https://databricksprep.com/index.html"><span class="dot"></span><b>DataBricks Prep</b> · Associate Exam Series</a>
+    <div class="right"><span class="pill">Section 03 · Topic 2 of 6</span><button class="listen-btn" id="listenBtn" aria-label="Listen to this article"><span class="ldot"></span><span class="ltxt">Listen</span></button></div>
+  </div>
+</div>
+
+<div class="wrap" id="article">
+
+  <header class="hero">
+    <a class="back" href="https://databricksprep.com/index.html">← Back to all topics</a>
+    <div class="badges"><span class="badge section">Section 03</span><span class="badge live">Live</span><span class="badge name">Data Processing &amp; Transformations</span></div>
+    <h1>Classify Cluster Type &amp; Configuration for <em>Optimal Performance</em></h1>
+    <p class="deck">All-purpose vs. job clusters, autoscaling, spot instances, and driver/worker sizing. Choosing the right compute is the single biggest lever you have over both the cost and the speed of everything that runs on the lakehouse — and the exam tests whether you know which knob to turn.</p>
+    <div class="meta">
+      <div>Exam guide<b>Subdomain 3.2</b></div>
+      <div>Difficulty<b>Core</b></div>
+      <div>Read time<b>~16 min</b></div>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#why">Why compute choice is the biggest lever</a></li>
+      <li><a href="#types">The two cluster types at a glance</a></li>
+      <li><a href="#allpurpose">All-purpose clusters — interactive work</a></li>
+      <li><a href="#job">Job clusters — automated workloads</a></li>
+      <li><a href="#autoscale">Autoscaling — sizing that adapts</a></li>
+      <li><a href="#spot">Spot instances — cheap, but interruptible</a></li>
+      <li><a href="#sizing">Driver &amp; worker sizing</a></li>
+      <li><a href="#tune">Configuring for optimal performance</a></li>
+      <li><a href="#comparison">All-purpose vs. job — the table</a></li>
+      <li><a href="#mistakes">Design decisions &amp; common mistakes</a></li>
+      <li><a href="#exam">Exam tips &amp; practice questions</a></li>
+      <li><a href="#cheat">Quick-reference cheat sheet</a></li>
+    </ol>
+  </nav>
+
+  <section id="why">
+    <h2 class="sec"><span class="n">01</span>Why compute choice is the biggest lever</h2>
+    <p>Every notebook you run, every pipeline you schedule, and every dashboard query executes on <strong>compute</strong> — a cluster of virtual machines running Apache Spark. Pick the wrong type of cluster and you either burn money on idle machines or throttle a production job. Size it wrong and you spend twice as long — and twice as much — as you needed to.</p>
+    <p>Compute cost is measured in <strong>DBUs</strong> (Databricks Units) — a unit of processing consumed per hour, on top of the raw cloud VM cost. Different cluster types are billed at different DBU rates, so the type you choose has a direct, permanent effect on your bill.</p>
+    <blockquote>Right compute is a design decision, not an afterthought. It sets the ceiling on how fast, cheap, and reliable everything downstream can be.</blockquote>
+    <div class="box exam">
+      <p class="h">🎯 Exam focus</p>
+      <p>For the Associate exam, the two must-know distinctions are: <strong>all-purpose vs. job clusters</strong> (which to use when, and which is cheaper), and how <strong>autoscaling, spot instances, and node sizing</strong> trade cost against performance and reliability. Almost every compute question is really asking "which option is the most cost-effective way to meet this requirement?"</p>
+    </div>
+  </section>
+
+  <section id="types">
+    <h2 class="sec"><span class="n">02</span>The two cluster types at a glance</h2>
+    <p>Databricks gives you two fundamental kinds of general-purpose Spark compute, and the difference is entirely about <em>who creates them and how long they live</em>:</p>
+    <ul>
+      <li><strong>All-purpose clusters</strong> are created by a person, can be shared by many users, and stay running until stopped. Built for <em>interactive</em> work.</li>
+      <li><strong>Job clusters</strong> are created automatically by the scheduler when a job starts, and are torn down the instant the job finishes. Built for <em>automated</em> work.</li>
+    </ul>
+    <p>A third compute type, the <strong>SQL Warehouse</strong>, is dedicated to SQL and BI workloads and comes in Classic, Pro, and Serverless flavours — worth knowing it exists, but the two clusters above are the heart of this subdomain.</p>
+    <div class="box tip">
+      <p class="h">💡 The load-bearing analogy</p>
+      <p>An <strong>all-purpose cluster is a hire car you keep for the week</strong> — always parked outside, ready whenever you want to drive, and you pay for every hour whether you're driving or not. A <strong>job cluster is a taxi</strong> — it appears exactly when you need the trip, takes you there, and vanishes the moment you arrive. For a single scheduled errand, the taxi is far cheaper.</p>
+    </div>
+  </section>
+
+  <section id="allpurpose">
+    <h2 class="sec"><span class="n">03</span>All-purpose clusters — interactive work</h2>
+    <p>All-purpose (interactive) clusters are for <strong>exploration and collaboration</strong>: writing and testing code in notebooks, ad-hoc analysis, debugging, and shared development. Their defining trait is that they <em>persist</em> — you start one, several engineers attach to it, and it keeps running across many notebook runs until someone stops it or it auto-terminates.</p>
+    <h3>Characteristics</h3>
+    <ul>
+      <li><strong>Created manually</strong> via the UI, CLI, or API, and can be <strong>restarted</strong>.</li>
+      <li><strong>Shared</strong> by multiple users at once, which is great for collaboration.</li>
+      <li><strong>Higher DBU rate</strong> — you pay a premium for that always-on interactivity.</li>
+      <li><strong>Auto-termination</strong> is the key cost control: set an idle timeout so the cluster shuts itself down after N minutes of inactivity instead of running all night.</li>
+    </ul>
+    <div class="box pit">
+      <p class="h">⚠ Common pitfall</p>
+      <p>Running <strong>production jobs on an all-purpose cluster</strong> is the classic cost mistake. You pay the higher interactive DBU rate, and a cluster left running after the work is done quietly bleeds money. Automated work belongs on a job cluster — always.</p>
+    </div>
+  </section>
+
+  <section id="job">
+    <h2 class="sec"><span class="n">04</span>Job clusters — automated workloads</h2>
+    <p>Job clusters (also called automated clusters) are created <strong>on demand by the Databricks job scheduler</strong>. When a scheduled or triggered job runs, a fresh cluster spins up, executes the job, and is <strong>automatically terminated</strong> when the job completes. You cannot restart a job cluster or attach a notebook to it interactively.</p>
+    <h3>Why they're the right default for production</h3>
+    <ul>
+      <li><strong>Cheaper:</strong> job compute is billed at a lower DBU rate than all-purpose compute.</li>
+      <li><strong>Isolated:</strong> a clean environment every run means no leftover state, libraries, or variables from a previous run to cause surprises.</li>
+      <li><strong>Zero idle cost:</strong> the cluster exists only for the duration of the job — nothing is left running afterwards.</li>
+      <li><strong>Reliable &amp; reproducible:</strong> the same cluster spec is provisioned identically each time the job runs.</li>
+    </ul>
+    <div class="box exam">
+      <p class="h">🎯 Exam focus</p>
+      <p>The rule to memorise: <strong>interactive / exploratory / shared → all-purpose; scheduled / automated / production → job cluster.</strong> If a scenario mentions a nightly pipeline, a scheduled ETL job, or cost-optimised automation, the answer is a <strong>job cluster</strong>.</p>
+    </div>
+  </section>
+
+  <section id="autoscale">
+    <h2 class="sec"><span class="n">05</span>Autoscaling — sizing that adapts</h2>
+    <p>Rather than pinning a fixed number of workers, <strong>autoscaling</strong> lets Databricks add and remove worker nodes automatically within a range you define (a minimum and a maximum). When a stage needs more parallelism, workers are added; when the cluster goes quiet, idle workers are released to save money.</p>
+    <ul>
+      <li>You set the <strong>min and max worker count</strong>; Databricks manages everything in between based on load.</li>
+      <li>It scales the <strong>number of workers only</strong> — the driver node stays a fixed size.</li>
+      <li>It's ideal for <strong>variable or unpredictable workloads</strong> where a fixed size would either bottleneck or waste money.</li>
+    </ul>
+    <div class="box note">
+      <p class="h">📝 Note — when autoscaling helps less</p>
+      <p>Autoscaling shines on bursty, variable batch work. It helps less for <strong>steady-state Structured Streaming</strong> (load is continuous, so there's little to scale down to) and can even hurt workloads that rely on cached data on specific nodes, since removing a node discards its cache. Match the tool to the workload — don't assume autoscaling is always on.</p>
+    </div>
+  </section>
+
+  <section id="spot">
+    <h2 class="sec"><span class="n">06</span>Spot instances — cheap, but interruptible</h2>
+    <p><strong>Spot instances</strong> use a cloud provider's spare capacity at a steep discount — often a fraction of on-demand price. The catch: the provider can <strong>reclaim (evict) them at short notice</strong> when it needs the capacity back. That makes spot fantastic for cost savings and risky for anything that can't tolerate a node vanishing mid-task.</p>
+    <h3>The golden rule of spot</h3>
+    <blockquote>Put workers on spot, keep the driver on-demand.</blockquote>
+    <p>If a spot <em>worker</em> is reclaimed, Spark simply re-runs its lost tasks on the remaining nodes — a slowdown, not a failure. But if the <strong>driver</strong> is lost, the <em>entire cluster dies</em> and the job fails. So the standard, cost-optimised pattern is spot workers (ideally with fallback to on-demand if spot capacity is unavailable) and an on-demand driver.</p>
+    <div class="box trap">
+      <p class="h">🎯 Exam trap</p>
+      <p>Watch for answers that suggest putting the <strong>driver on a spot instance</strong> to save money. That's a trap — losing the driver terminates the whole cluster. The correct cost-vs-reliability balance is <strong>on-demand driver + spot workers</strong>.</p>
+    </div>
+  </section>
+
+  <section id="sizing">
+    <h2 class="sec"><span class="n">07</span>Driver &amp; worker sizing</h2>
+    <p>A Spark cluster is one <strong>driver node</strong> coordinating many <strong>worker nodes</strong>. Knowing what each does tells you which one to make bigger when performance suffers.</p>
+
+    <div class="cluster">
+      <div class="cap">Anatomy of a Spark cluster</div>
+      <div class="node driver">
+        <div class="tag">◆ Driver node</div>
+        <h5>The coordinator</h5>
+        <p>Runs the driver program, maintains cluster state, schedules tasks, hosts the notebook REPL, and collects results back from the workers.</p>
+      </div>
+      <div class="conn">│ &nbsp;╱ │ ╲ &nbsp;│</div>
+      <div class="workers">
+        <div class="node worker"><div class="tag">● Worker 1</div><h5>Executor</h5><p>Runs tasks on a partition of the data in parallel.</p></div>
+        <div class="node worker"><div class="tag">● Worker 2</div><h5>Executor</h5><p>Runs tasks on a partition of the data in parallel.</p></div>
+        <div class="node worker"><div class="tag">● Worker N</div><h5>Executor</h5><p>Runs tasks on a partition of the data in parallel.</p></div>
+      </div>
+      <div class="scaleline">Autoscaling adds / removes <b>workers</b> between min and max · the driver stays fixed</div>
+    </div>
+
+    <h3>Size the <span class="accent">driver</span> up when…</h3>
+    <ul>
+      <li>You pull large results back to the driver — <code>collect()</code>, <code>toPandas()</code>, or displaying huge outputs.</li>
+      <li>You broadcast a large table in a join (the driver stages the broadcast).</li>
+      <li>You run many concurrent notebooks / streams on one cluster, or heavy single-node (non-Spark) Python.</li>
+    </ul>
+    <h3>Scale the <span class="accent">workers</span> out when…</h3>
+    <ul>
+      <li>Your data is large and the bottleneck is distributed compute — more workers means more parallelism.</li>
+      <li>Jobs are shuffle- or CPU-heavy and would finish faster with more executors.</li>
+    </ul>
+
+    <h4>Choosing an instance family</h4>
+    <ul>
+      <li><strong>Memory-optimised</strong> — for shuffle-heavy joins, aggregations, and caching-heavy workloads.</li>
+      <li><strong>Compute-optimised</strong> — for CPU-bound work with modest memory needs.</li>
+      <li><strong>Storage-optimised</strong> — for workloads that benefit from fast local disk caching (Delta / disk cache).</li>
+    </ul>
+
+    <div class="box note">
+      <p class="h">📝 Note — the single-node cluster</p>
+      <p>A <strong>single-node cluster</strong> has a driver and <em>zero workers</em> — the driver acts as both. It's ideal for small data, lightweight jobs, or single-machine ML libraries that don't distribute across Spark. Don't use it for large, distributed workloads; there's nothing to parallelise onto.</p>
+    </div>
+  </section>
+
+  <section id="tune">
+    <h2 class="sec"><span class="n">08</span>Configuring for optimal performance</h2>
+    <p>Once you've picked a type, a handful of settings do most of the work of balancing cost against speed:</p>
+    <ol class="body">
+      <li><strong>Auto-termination</strong> on every all-purpose cluster — the simplest way to kill idle spend.</li>
+      <li><strong>Autoscaling</strong> for variable batch workloads, with a sensible min/max range.</li>
+      <li><strong>Spot workers + on-demand driver</strong> for cost-tolerant jobs.</li>
+      <li><strong>Instance pools</strong> — keep a set of ready, idle VMs warm so clusters start in seconds instead of minutes, cutting job latency.</li>
+      <li><strong>Photon</strong> — Databricks' vectorised query engine that accelerates SQL and DataFrame workloads; it costs extra DBUs but often improves overall price/performance.</li>
+      <li><strong>Right-size, don't over-provision</strong> — pick node families and counts that match the actual bottleneck (memory vs CPU vs disk).</li>
+    </ol>
+    <div class="code">
+      <div class="bar"><span class="lang">JSON · Jobs API</span><span class="desc">Cost-optimised job cluster spec</span></div>
+      <pre><span class="c">// A job cluster: autoscaling workers + spot with on-demand driver</span>
+{
+  <span class="s">"new_cluster"</span>: {
+    <span class="s">"spark_version"</span>: <span class="s">"15.4.x-scala2.12"</span>,
+    <span class="s">"node_type_id"</span>: <span class="s">"Standard_DS4_v2"</span>,
+    <span class="s">"autoscale"</span>: { <span class="s">"min_workers"</span>: 2, <span class="s">"max_workers"</span>: 8 },
+    <span class="s">"azure_attributes"</span>: {
+      <span class="s">"availability"</span>: <span class="s">"SPOT_WITH_FALLBACK_AZURE"</span>,  <span class="c">// workers on spot</span>
+      <span class="s">"first_on_demand"</span>: 1                        <span class="c">// driver stays on-demand</span>
+    }
+  }
+}</pre>
+    </div>
+  </section>
+
+  <section id="comparison">
+    <h2 class="sec"><span class="n">09</span>All-purpose vs. job — the table</h2>
+    <p>The exam frequently hands you a scenario and asks which cluster fits. Lock in the distinctions:</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Dimension</th><th class="ap-col">All-purpose</th><th class="job-col">Job cluster</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>Created by</th><td>A user (UI / CLI / API)</td><td>The job scheduler, automatically</td></tr>
+          <tr><th>Lifecycle</th><td>Persists until stopped</td><td>Terminates when the job ends</td></tr>
+          <tr><th>Restartable</th><td>Yes</td><td>No</td></tr>
+          <tr><th>Shared</th><td>Yes — many users</td><td>No — dedicated to one job</td></tr>
+          <tr><th>Best for</th><td>Interactive, exploratory, collaborative</td><td>Scheduled, automated, production</td></tr>
+          <tr><th>DBU cost</th><td>Higher</td><td>Lower</td></tr>
+          <tr><th>Idle cost risk</th><td>High (mitigate with auto-terminate)</td><td>None — dies with the job</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="mistakes">
+    <h2 class="sec"><span class="n">10</span>Design decisions &amp; common mistakes</h2>
+    <ul>
+      <li><strong>Production jobs on all-purpose clusters.</strong> Higher DBU rate plus idle-cost risk. Use job clusters for anything scheduled.</li>
+      <li><strong>Driver on spot.</strong> One eviction kills the whole cluster. Keep the driver on-demand; only workers go on spot.</li>
+      <li><strong>Scaling out when the driver is the bottleneck.</strong> Adding workers won't help a <code>collect()</code>-heavy or broadcast-heavy job — that needs a bigger driver.</li>
+      <li><strong>Assuming autoscaling always helps.</strong> Steady streaming and cache-dependent jobs may see little benefit or even disruption.</li>
+      <li><strong>No auto-termination.</strong> The most common source of surprise bills is an interactive cluster left running overnight.</li>
+      <li><strong>Over-provisioning "to be safe."</strong> Bigger isn't faster if the bottleneck is elsewhere; match node family to the actual constraint.</li>
+    </ul>
+    <div class="box tip">
+      <p class="h">💡 Architect's rule of thumb</p>
+      <p>Default to <strong>job clusters with autoscaling, spot workers, an on-demand driver, and instance pools</strong> for production. Reserve all-purpose clusters for genuine interactive work, and always set an auto-termination timeout. That single default pattern eliminates the majority of real-world Databricks cost problems.</p>
+    </div>
+  </section>
+
+  <section id="exam">
+    <h2 class="sec"><span class="n">11</span>Exam tips &amp; practice questions</h2>
+
+    <h4>Key facts to memorise</h4>
+    <ul>
+      <li><strong>All-purpose</strong> = interactive, shared, manual, persists, restartable, higher DBU cost.</li>
+      <li><strong>Job cluster</strong> = automated, single job, terminates on completion, not restartable, lower DBU cost.</li>
+      <li><strong>Autoscaling</strong> adjusts <em>workers</em> between min/max; the driver is fixed.</li>
+      <li><strong>Spot</strong> = cheap but reclaimable → workers on spot, <em>driver on-demand</em>.</li>
+      <li><strong>Driver</strong> coordinates + collects results; <strong>workers</strong> execute tasks in parallel.</li>
+      <li><strong>Single-node</strong> cluster = driver only, no workers; for small / single-machine work.</li>
+      <li><strong>Auto-termination</strong> controls idle cost; <strong>pools</strong> cut start-up time; <strong>Photon</strong> speeds SQL/DataFrame work.</li>
+    </ul>
+
+    <hr class="rule">
+
+    <div class="pq">
+      <div class="qh">Practice question 1</div>
+      <div class="q">A team runs a production ETL pipeline every night on a schedule and wants to minimise cost. Which compute should they use?</div>
+      <ul class="opts">
+        <li><span>A.</span>A shared all-purpose cluster left running 24/7</li>
+        <li><span>B.</span>A job cluster created by the scheduler for each run</li>
+        <li><span>C.</span>A single-node all-purpose cluster</li>
+        <li><span>D.</span>A SQL Warehouse</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B — Job cluster</div><p>Scheduled, automated production work belongs on a job cluster: lower DBU rate, isolated environment, and zero idle cost because it terminates when the job finishes.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 2</div>
+      <div class="q">Which statement about all-purpose clusters is TRUE?</div>
+      <ul class="opts">
+        <li><span>A.</span>They terminate automatically when a job completes</li>
+        <li><span>B.</span>They cannot be restarted once stopped</li>
+        <li><span>C.</span>They can be shared by multiple users for interactive work</li>
+        <li><span>D.</span>They are billed at a lower DBU rate than job clusters</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: C</div><p>All-purpose clusters are shared, interactive, and restartable. Options A and B describe job clusters, and D is backwards — all-purpose compute is billed at a <em>higher</em> DBU rate.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 3</div>
+      <div class="q">To reduce cost, an engineer wants to use spot instances. Which configuration best balances savings and reliability?</div>
+      <ul class="opts">
+        <li><span>A.</span>Driver and all workers on spot</li>
+        <li><span>B.</span>Driver on spot, workers on-demand</li>
+        <li><span>C.</span>Driver on-demand, workers on spot with fallback</li>
+        <li><span>D.</span>All nodes on-demand only</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: C</div><p>Losing the driver terminates the whole cluster, so the driver must stay on-demand. Workers on spot (with fallback to on-demand) capture the savings while a reclaimed worker only causes task re-runs, not a failure.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 4</div>
+      <div class="q">A job runs <code>df.collect()</code> on a very large result and the driver runs out of memory, even though workers are underused. What is the best fix?</div>
+      <ul class="opts">
+        <li><span>A.</span>Add more worker nodes</li>
+        <li><span>B.</span>Increase the max autoscaling limit</li>
+        <li><span>C.</span>Use a larger driver node</li>
+        <li><span>D.</span>Switch the workers to spot instances</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: C</div><p>Collecting large results happens on the driver, so the fix is a bigger driver — adding or scaling workers doesn't relieve driver memory pressure. (Better still, avoid collecting large results to the driver at all.)</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 5</div>
+      <div class="q">When autoscaling is enabled on a cluster, what does Databricks actually scale?</div>
+      <ul class="opts">
+        <li><span>A.</span>The size of the driver node</li>
+        <li><span>B.</span>The number of worker nodes, between a min and max</li>
+        <li><span>C.</span>The Spark version</li>
+        <li><span>D.</span>The DBU billing rate</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>Autoscaling adds and removes worker nodes within the min/max range you configure. It does not change the driver, the runtime version, or the billing rate.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 6</div>
+      <div class="q">An analyst wants an interactive environment to explore data collaboratively with teammates in notebooks throughout the day. Which cluster type fits, and what setting controls idle cost?</div>
+      <ul class="opts">
+        <li><span>A.</span>Job cluster; spot instances</li>
+        <li><span>B.</span>All-purpose cluster; auto-termination timeout</li>
+        <li><span>C.</span>Job cluster; auto-termination timeout</li>
+        <li><span>D.</span>All-purpose cluster; Photon</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>Collaborative interactive work needs an all-purpose cluster. Its idle-cost risk is controlled with an auto-termination timeout that shuts the cluster down after a period of inactivity.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 7</div>
+      <div class="q">Which describes a single-node cluster?</div>
+      <ul class="opts">
+        <li><span>A.</span>A driver with a fixed number of workers that cannot autoscale</li>
+        <li><span>B.</span>A driver with no workers, where the driver runs the workload itself</li>
+        <li><span>C.</span>A cluster restricted to SQL workloads only</li>
+        <li><span>D.</span>A cluster that runs only on spot instances</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>A single-node cluster has only a driver and zero workers — the driver acts as both coordinator and executor. It suits small data and single-machine (non-distributed) libraries, not large distributed jobs.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 8</div>
+      <div class="q">Which action most directly reduces the cluster <em>start-up time</em> for frequently run jobs?</div>
+      <ul class="opts">
+        <li><span>A.</span>Enabling Photon</li>
+        <li><span>B.</span>Using an instance pool of warm, ready VMs</li>
+        <li><span>C.</span>Lowering the autoscaling minimum to zero</li>
+        <li><span>D.</span>Switching to a higher DBU tier</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>Instance pools keep idle VMs warm so a cluster can acquire nodes in seconds rather than waiting for the cloud provider to provision them. Photon speeds query execution, not cluster launch.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 9</div>
+      <div class="q">A workload is a continuous, steady-load Structured Streaming job. Which statement is most accurate about autoscaling here?</div>
+      <ul class="opts">
+        <li><span>A.</span>Autoscaling will dramatically cut cost because load is constant</li>
+        <li><span>B.</span>Autoscaling provides limited benefit because load doesn't fluctuate much</li>
+        <li><span>C.</span>Autoscaling is required for all streaming jobs</li>
+        <li><span>D.</span>Autoscaling scales the driver up during peaks</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>Autoscaling delivers the most value on bursty, variable workloads. A steady-state stream has little idle capacity to scale away, so the benefit is limited. Autoscaling never resizes the driver.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 10</div>
+      <div class="q">Which pairing correctly matches each node type to its primary responsibility?</div>
+      <ul class="opts">
+        <li><span>A.</span>Driver executes tasks in parallel; workers coordinate the job</li>
+        <li><span>B.</span>Driver coordinates and collects results; workers execute tasks in parallel</li>
+        <li><span>C.</span>Both driver and workers only store data, never compute</li>
+        <li><span>D.</span>Workers schedule tasks; the driver holds the data partitions</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>The driver coordinates the job, schedules work, maintains state, and collects results; the workers run the actual tasks on data partitions in parallel. The other options reverse or confuse these roles.</p></div></details>
+    </div>
+  </section>
+
+  <section id="cheat">
+    <h2 class="sec"><span class="n">12</span>Quick-reference cheat sheet</h2>
+    <div class="cheat">
+      <div class="ch">Cluster Type &amp; Configuration <span>Subdomain 3.2</span></div>
+      <div class="grid">
+        <div class="cell"><div class="t">All-purpose</div><p>Interactive · shared · manual · restartable · <strong>higher DBU</strong>. Set an <strong>auto-termination</strong> timeout.</p></div>
+        <div class="cell"><div class="t">Job cluster</div><p>Automated · single job · <strong>terminates on completion</strong> · not restartable · <strong>lower DBU</strong>. Production default.</p></div>
+        <div class="cell"><div class="t">Autoscaling</div><p>Adds/removes <strong>workers</strong> between min &amp; max. Driver is fixed. Best for variable batch.</p></div>
+        <div class="cell"><div class="t">Spot instances</div><p>Cheap but reclaimable. <strong>Workers on spot, driver on-demand</strong> — losing the driver kills the cluster.</p></div>
+        <div class="cell"><div class="t">Driver vs worker</div><p>Bigger <strong>driver</strong> for <code>collect()</code> / broadcast / many streams. More <strong>workers</strong> for large distributed compute.</p></div>
+        <div class="cell"><div class="t">Speed levers</div><p><strong>Pools</strong> → faster starts · <strong>Photon</strong> → faster SQL/DataFrame · <strong>auto-terminate</strong> → less idle cost.</p></div>
+      </div>
+    </div>
+
+    <p>That's Subdomain 3.2 in full. The mental model is simple: <strong>match the compute to the workload.</strong> Interactive and collaborative work goes on all-purpose clusters with auto-termination; automated production work goes on cheaper, self-terminating job clusters. Then tune with autoscaling, spot workers behind an on-demand driver, pools, and Photon. Get the type right first, size second, and the exam's cluster questions become predictable.</p>
+    <p>Good luck on the exam!</p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footmeta">
+      Databricks Data Engineer Associate Exam Prep Series · Subdomain 3.2 — Cluster Type &amp; Configuration<br>
+      <a href="https://docs.databricks.com/aws/en/compute/">Official Databricks — Compute documentation</a> · <a href="https://databricksprep.com/index.html">← Back to all topics</a>
+    </div>
+    <div class="coffee">
+      <h3>☕ Found this helpful?</h3>
+      <p>Every article on databricksprep.com is completely free — if this saved you study time, a £3 coffee means a lot!</p>
+      <a class="btn" href="https://ko-fi.com/nidhin">☕ Buy me a coffee</a>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+(function(){
+  var btn=document.getElementById('listenBtn');
+  if(!btn)return;
+  var synth=window.speechSynthesis;
+  var ltxt=btn.querySelector('.ltxt');
+  if(!synth){btn.style.display='none';return;}
+  var chunks=[],idx=0,playing=false;
+  function build(){
+    var src=document.getElementById('article');
+    if(!src)return[];
+    var c=src.cloneNode(true);
+    c.querySelectorAll('.code,pre,nav.toc,.cheat,.badges,footer,.coffee,.split,.tablewrap').forEach(function(e){e.remove();});
+    var raw=c.innerText.replace(/\s+/g,' ').trim();
+    var parts=raw.match(/[^.!?]+[.!?]+|\S.*$/g)||[raw];
+    var out=[],buf='';
+    parts.forEach(function(s){
+      if((buf+s).length>230){if(buf)out.push(buf.trim());buf=s;}else buf+=s;
+    });
+    if(buf.trim())out.push(buf.trim());
+    return out;
+  }
+  function stop(){playing=false;synth.cancel();btn.classList.remove('playing');ltxt.textContent='Listen';}
+  function next(){
+    if(idx>=chunks.length){stop();return;}
+    var u=new SpeechSynthesisUtterance(chunks[idx]);
+    u.rate=1.0;u.pitch=1.0;
+    u.onend=function(){if(playing){idx++;next();}};
+    u.onerror=function(){stop();};
+    synth.speak(u);
+  }
+  btn.addEventListener('click',function(){
+    if(playing){stop();return;}
+    chunks=build();idx=0;
+    if(!chunks.length)return;
+    playing=true;btn.classList.add('playing');ltxt.textContent='Stop';
+    synth.cancel();next();
+  });
+  window.addEventListener('beforeunload',function(){synth.cancel();});
+})();
+</script>
+</body>
+</html>

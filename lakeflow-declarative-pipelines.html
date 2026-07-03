@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Databricks Associate Exam: Advantages of Lakeflow Spark Declarative Pipelines for ETL</title>
+<meta name="description" content="Why Lakeflow Spark Declarative Pipelines (SDP, formerly Delta Live Tables) beat hand-written Spark jobs for production ETL — automatic orchestration, built-in data quality, incremental processing, retries, and lineage. Written for the Databricks Certified Data Engineer Associate exam.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a;--bg-2:#0f0f0f;--card:#121211;--card-2:#161615;
+    --line:#242422;--line-2:#2e2e2b;--ink:#ededea;--ink-2:#c7c6c1;--mut:#8f8e88;--mut-2:#6f6e68;
+    --accent:#ff4d1c;--accent-soft:rgba(255,77,28,.10);--accent-line:rgba(255,77,28,.28);--live:#35c9a8;--live-line:rgba(53,201,168,.5);
+    --decl:#57b56a;--imp:#c98a4b;
+    --ok:#57b56a;--warn:#e0b13c;
+    --serif:"IBM Plex Serif",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,monospace;--disp:"Syne",sans-serif;
+    --maxw:820px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+  body{margin:0;background:var(--bg);color:var(--ink-2);font-family:var(--serif);font-size:18px;line-height:1.72;-webkit-font-smoothing:antialiased;
+    background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+    background-size:52px 52px;background-position:center top;}
+  a{color:inherit}
+  .accent{color:var(--accent)}
+  em{font-style:italic}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  .topbar{border-bottom:1px solid var(--line);background:rgba(10,10,10,.72);backdrop-filter:blur(8px);position:sticky;top:0;z-index:50}
+  .topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .brand{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);text-decoration:none;display:flex;align-items:center;gap:10px}
+  .brand b{color:var(--ink);font-weight:600}
+  .brand .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block}
+  .topbar .sec{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut-2)}
+
+  header.hero{padding:70px 0 40px;border-bottom:1px solid var(--line)}
+  .back{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--mut);text-decoration:none;display:inline-flex;gap:8px;align-items:center;margin-bottom:34px;transition:color .2s}
+  .back:hover{color:var(--accent)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:22px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .eyebrow .sep{color:var(--mut-2)}
+  .eyebrow .plain{color:var(--mut)}
+  h1{font-family:var(--disp);font-weight:800;color:var(--ink);font-size:clamp(34px,6vw,56px);line-height:1.04;letter-spacing:-.02em;margin:0 0 26px}
+  h1 em{font-family:var(--serif);font-weight:500;font-style:italic;color:var(--accent);letter-spacing:-.01em}
+  .deck{font-size:20px;line-height:1.6;color:var(--ink-2);max-width:70ch;margin:0 0 30px}
+  .meta{display:flex;flex-wrap:wrap;gap:26px;padding-top:10px}
+  .meta div{font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--mut)}
+  .meta b{display:block;color:var(--ink);font-size:14px;letter-spacing:.02em;margin-top:3px;font-weight:600}
+
+  nav.toc{margin:44px 0;border:1px solid var(--line);border-radius:2px;background:linear-gradient(180deg,var(--card),var(--bg-2));padding:26px 30px}
+  nav.toc h2{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin:0 0 18px;font-weight:500}
+  nav.toc ol{margin:0;padding:0;list-style:none;counter-reset:toc}
+  nav.toc li{counter-increment:toc;border-top:1px solid var(--line)}
+  nav.toc li:first-child{border-top:none}
+  nav.toc a{display:flex;gap:16px;align-items:baseline;padding:11px 0;text-decoration:none;color:var(--ink-2);font-size:16px;transition:color .18s,padding .18s}
+  nav.toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--mut-2);min-width:26px;transition:color .18s}
+  nav.toc a:hover{color:var(--accent);padding-left:6px}
+  nav.toc a:hover::before{color:var(--accent)}
+
+  section{padding:20px 0}
+  h2.sec{font-family:var(--disp);font-weight:700;color:var(--ink);font-size:clamp(26px,4vw,34px);line-height:1.12;letter-spacing:-.015em;margin:52px 0 8px;scroll-margin-top:80px;display:flex;gap:16px;align-items:baseline}
+  h2.sec .n{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--accent);letter-spacing:0}
+  h3{font-family:var(--disp);font-weight:600;color:var(--ink);font-size:22px;letter-spacing:-.01em;margin:38px 0 6px}
+  h4{font-family:var(--mono);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:34px 0 8px;font-weight:600}
+  p{margin:16px 0}
+  strong{color:var(--ink);font-weight:600}
+  code{font-family:var(--mono);font-size:.86em;background:var(--card-2);border:1px solid var(--line);padding:1px 6px;border-radius:3px;color:#f1cbb8}
+
+  ul,ol.body{margin:16px 0;padding-left:0;list-style:none}
+  ul li,ol.body li{position:relative;padding-left:26px;margin:10px 0}
+  ul li::before{content:"";position:absolute;left:2px;top:.62em;width:7px;height:7px;background:var(--accent);border-radius:1px}
+  ol.body{counter-reset:b}
+  ol.body li{counter-increment:b}
+  ol.body li::before{content:counter(b);position:absolute;left:0;top:0;font-family:var(--mono);font-size:13px;color:var(--accent)}
+
+  blockquote{margin:34px 0;padding:6px 0 6px 28px;border-left:2px solid var(--accent);font-family:var(--serif);font-style:italic;font-size:22px;line-height:1.5;color:var(--ink)}
+
+  .code{margin:24px 0;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:#0c0c0b}
+  .code .bar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--card-2);border-bottom:1px solid var(--line)}
+  .code .bar .lang{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .code .bar .desc{font-family:var(--mono);font-size:11px;color:var(--mut-2);letter-spacing:.02em}
+  .code pre{margin:0;padding:18px 16px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.65;color:#d7d6d0}
+  .code pre .c{color:#6f6e68;font-style:italic}
+  .code pre .k{color:#ff7a52;font-weight:500}
+  .code pre .s{color:#c8b48a}
+  .code pre .f{color:#9ec7e0}
+
+  .box{margin:26px 0;border:1px solid var(--line);border-left-width:2px;border-radius:3px;padding:18px 22px;background:var(--card)}
+  .box .h{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;margin:0 0 6px;font-weight:600;display:flex;gap:8px;align-items:center}
+  .box p{margin:6px 0 0;font-size:16.5px;line-height:1.62}
+  .box.exam{border-left-color:var(--accent)} .box.exam .h{color:var(--accent)}
+  .box.trap{border-left-color:#e06b3c} .box.trap .h{color:#e06b3c}
+  .box.pit{border-left-color:var(--warn)} .box.pit .h{color:var(--warn)}
+  .box.tip{border-left-color:var(--ok)} .box.tip .h{color:var(--ok)}
+  .box.note{border-left-color:var(--mut)} .box.note .h{color:var(--mut)}
+
+  /* signature: declare vs handle split panel */
+  .split{margin:34px 0;border:1px solid var(--line);border-radius:3px;overflow:hidden;background:linear-gradient(180deg,var(--card),var(--bg-2))}
+  .split .cap{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);text-align:center;padding:22px 0 4px}
+  .split .cols{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);margin-top:18px}
+  .split .col{background:var(--card-2);padding:22px 22px 26px}
+  .split .col .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .split .col.you .lbl{color:var(--decl)}
+  .split .col.sdp .lbl{color:var(--accent)}
+  .split .col ul{margin:0}
+  .split .col li{font-family:var(--serif);font-size:15px;line-height:1.5;color:var(--ink-2);margin:9px 0;padding-left:22px}
+  .split .col.you li::before{background:var(--decl)}
+  .split .col.sdp li::before{background:var(--accent)}
+  @media(max-width:600px){.split .cols{grid-template-columns:1fr}}
+
+  .tablewrap{margin:26px 0;overflow-x:auto;border:1px solid var(--line);border-radius:3px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}
+  th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);background:var(--card-2);font-weight:600}
+  tbody th{font-family:var(--serif);color:var(--ink);font-weight:600;background:var(--bg-2);white-space:nowrap}
+  td{color:var(--ink-2)}
+  tbody tr:last-child th,tbody tr:last-child td{border-bottom:none}
+  .sdp-col{color:var(--decl)!important;font-weight:600}
+  .hand-col{color:var(--imp)!important;font-weight:600}
+
+  .pq{margin:22px 0;border:1px solid var(--line);border-radius:3px;background:var(--card);overflow:hidden}
+  .pq .qh{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);padding:14px 20px 0}
+  .pq .q{padding:6px 20px 4px;font-size:17px;color:var(--ink);line-height:1.55}
+  .pq .opts{list-style:none;margin:8px 0 4px;padding:0 20px}
+  .pq .opts li{padding:7px 0 7px 30px;position:relative;font-size:16px;color:var(--ink-2)}
+  .pq .opts li span{position:absolute;left:0;font-family:var(--mono);font-size:13px;color:var(--mut)}
+  .pq .opts li::before{display:none}
+  details.rev{border-top:1px solid var(--line);margin-top:8px}
+  details.rev summary{list-style:none;cursor:pointer;padding:13px 20px;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:10px;transition:color .18s,background .18s}
+  details.rev summary::-webkit-details-marker{display:none}
+  details.rev summary::before{content:"▸";color:var(--accent);transition:transform .18s}
+  details.rev[open] summary::before{transform:rotate(90deg)}
+  details.rev summary:hover{color:var(--accent);background:var(--accent-soft)}
+  details.rev .ans{padding:2px 20px 20px}
+  details.rev .ans .verdict{font-family:var(--mono);font-size:14px;color:var(--ok);font-weight:600;letter-spacing:.04em;margin:6px 0 10px}
+  details.rev .ans p{margin:0;font-size:16px;color:var(--ink-2);line-height:1.6}
+
+  .cheat{margin:30px 0;border:1px solid var(--accent-line);border-radius:3px;overflow:hidden}
+  .cheat .ch{background:var(--accent-soft);border-bottom:1px solid var(--accent-line);padding:16px 22px;font-family:var(--disp);font-weight:700;font-size:19px;color:var(--ink);display:flex;justify-content:space-between;align-items:center}
+  .cheat .ch span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase;font-weight:500}
+  .cheat .grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+  .cheat .cell{background:var(--card);padding:18px 20px}
+  .cheat .cell .t{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;font-weight:600}
+  .cheat .cell p{margin:0;font-size:15px;line-height:1.55;color:var(--ink-2)}
+  .cheat .cell code{font-size:.82em}
+  @media(max-width:600px){.cheat .grid{grid-template-columns:1fr}}
+
+  hr.rule{border:none;border-top:1px solid var(--line);margin:40px 0}
+
+  footer{border-top:1px solid var(--line);margin-top:70px;padding:46px 0 30px;background:var(--bg-2)}
+  .footmeta{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--mut);line-height:1.9}
+  .footmeta a{color:var(--accent);text-decoration:none}
+  .footmeta a:hover{text-decoration:underline}
+  .coffee{margin:34px 0 0;border:1px solid var(--line);border-radius:3px;background:linear-gradient(180deg,var(--card),var(--bg-2));padding:26px;text-align:center}
+  .coffee h3{font-family:var(--disp);font-weight:700;color:var(--ink);font-size:22px;margin:0 0 6px}
+  .coffee p{margin:0 0 18px;font-size:16px;color:var(--mut)}
+  .coffee a.btn{display:inline-block;font-family:var(--mono);font-size:13px;letter-spacing:.06em;text-decoration:none;background:var(--accent);color:#0a0a0a;font-weight:600;padding:12px 24px;border-radius:3px;transition:transform .15s,filter .15s}
+  .coffee a.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+
+  /* --- hero badges (match live template) --- */
+  header.hero h1{font-family:var(--serif);font-weight:700;letter-spacing:-.012em}
+  header.hero h1 em{font-family:var(--serif);font-weight:600;font-style:italic;color:var(--accent)}
+  .badges{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:26px}
+  .badge{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;padding:7px 13px;border:1px solid;border-radius:7px;line-height:1;white-space:nowrap}
+  .badge.section{color:var(--accent);border-color:rgba(255,77,28,.55);background:transparent}
+  .badge.live{color:var(--live);border-color:var(--live-line);background:transparent}
+  .badge.name{color:var(--mut);border-color:rgba(255,255,255,.14);background:var(--card-2)}
+  /* --- topbar right: topic pill + listen --- */
+  .topbar .right{display:flex;align-items:center;gap:12px}
+  .topbar .pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--mut);border:1px solid var(--line-2);border-radius:22px;padding:6px 14px;white-space:nowrap}
+  .listen-btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);border:1px solid var(--line-2);border-radius:22px;padding:6px 14px;background:transparent;cursor:pointer;transition:border-color .18s,color .18s}
+  .listen-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .listen-btn .ldot{width:7px;height:7px;border-radius:50%;background:var(--mut);transition:background .18s}
+  .listen-btn.playing{border-color:var(--accent);color:var(--accent)}
+  .listen-btn.playing .ldot{background:var(--accent);animation:lpulse 1.2s ease-in-out infinite}
+  @keyframes lpulse{50%{opacity:.3}}
+  @media(max-width:720px){.topbar .pill{display:none}}
+  @media(max-width:520px){.brand{font-size:0}.brand .dot{font-size:12px}}
+
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <a class="brand" href="https://databricksprep.com/index.html"><span class="dot"></span><b>DataBricks Prep</b> · Associate Exam Series</a>
+    <div class="right"><span class="pill">Section 03 · Topic 3 of 6</span><button class="listen-btn" id="listenBtn" aria-label="Listen to this article"><span class="ldot"></span><span class="ltxt">Listen</span></button></div>
+  </div>
+</div>
+
+<div class="wrap" id="article">
+
+  <header class="hero">
+    <a class="back" href="https://databricksprep.com/index.html">← Back to all topics</a>
+    <div class="badges"><span class="badge section">Section 03</span><span class="badge live">Live</span><span class="badge name">Data Processing &amp; Transformations</span></div>
+    <h1>Advantages of Lakeflow Spark <em>Declarative Pipelines</em> for ETL</h1>
+    <p class="deck">Why declarative pipelines beat hand-written Spark jobs for production ETL. Lakeflow Spark Declarative Pipelines — the framework formerly known as Delta Live Tables — lets you declare <em>what</em> your pipeline should produce and hands the orchestration, retries, quality checks, and incremental processing to the engine.</p>
+    <div class="meta">
+      <div>Exam guide<b>Subdomain 3.3</b></div>
+      <div>Difficulty<b>Core</b></div>
+      <div>Read time<b>~15 min</b></div>
+    </div>
+  </header>
+
+  <div class="box note" style="margin-top:34px">
+    <p class="h">📝 Naming update — read this first</p>
+    <p><strong>Delta Live Tables (DLT) has been renamed Lakeflow Spark Declarative Pipelines (SDP).</strong> The engine was also open-sourced into <strong>Apache Spark 4.1</strong> as <em>Apache Spark Declarative Pipelines</em>; the Databricks product (Lakeflow SDP) extends it and runs on the Databricks Runtime. The Python API moved too: the old <code>import dlt</code> / <code>@dlt.table</code> is now <code>from pyspark import pipelines as dp</code> / <code>@dp.table</code>. The <code>dlt</code> module still works but is deprecated. You may still see "DLT" everywhere in the wild — treat the terms as the same thing.</p>
+  </div>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#two-ways">Two ways to build a pipeline</a></li>
+      <li><a href="#what">What Lakeflow SDP actually is</a></li>
+      <li><a href="#declare">Declarative vs. imperative — the core shift</a></li>
+      <li><a href="#orchestration">Advantage 1 — automatic orchestration</a></li>
+      <li><a href="#quality">Advantage 2 — built-in data quality</a></li>
+      <li><a href="#incremental">Advantage 3 — incremental &amp; unified batch/stream</a></li>
+      <li><a href="#retries">Advantage 4 — automatic retries &amp; recovery</a></li>
+      <li><a href="#lineage">Advantage 5 — lineage, observability &amp; governance</a></li>
+      <li><a href="#cdc">Advantage 6 — CDC &amp; SCD without hand-rolled MERGE</a></li>
+      <li><a href="#when-not">When hand-written Spark still wins</a></li>
+      <li><a href="#comparison">SDP vs. hand-written Spark</a></li>
+      <li><a href="#exam">Exam tips &amp; practice questions</a></li>
+      <li><a href="#cheat">Quick-reference cheat sheet</a></li>
+    </ol>
+  </nav>
+
+  <section id="two-ways">
+    <h2 class="sec"><span class="n">01</span>Two ways to build a pipeline</h2>
+    <p>There are two fundamentally different ways to build an ETL pipeline on Databricks. The <strong>imperative</strong> way — hand-written Spark and Structured Streaming jobs — means you write every step yourself: the reads, the transformations, the checkpoints, the write logic, the orchestration order, the retry handling, the data-quality checks, and the monitoring. You describe <em>how</em> everything happens.</p>
+    <p>The <strong>declarative</strong> way — Lakeflow Spark Declarative Pipelines — flips this. You declare the <em>datasets you want to exist</em> and the queries that define them, and the engine works out the rest: dependency order, parallelism, incremental computation, retries, and quality enforcement. You describe <em>what</em> you want, not how to get there.</p>
+    <blockquote>Imperative code tells the machine every step. Declarative code tells the machine the destination and lets it find the route.</blockquote>
+    <div class="box exam">
+      <p class="h">🎯 Exam focus</p>
+      <p>The exam wants you to recognise <strong>why the declarative approach is preferred for production ETL</strong>. The headline advantages to memorise: <strong>automatic orchestration, built-in data quality (expectations), automatic retries, incremental processing, unified batch + streaming, and free lineage/observability</strong> — all of which you would otherwise build by hand.</p>
+    </div>
+  </section>
+
+  <section id="what">
+    <h2 class="sec"><span class="n">02</span>What Lakeflow SDP actually is</h2>
+    <p>Lakeflow Spark Declarative Pipelines is a declarative framework for building batch and streaming pipelines in <strong>SQL or Python</strong>. You define a small number of object types, and the pipeline runtime assembles and runs them:</p>
+    <ul>
+      <li><strong>Streaming tables</strong> — Unity Catalog-managed tables that are streaming targets, ideal for incremental ingestion (e.g. via Auto Loader).</li>
+      <li><strong>Materialized views</strong> — UC-managed tables that hold the results of a batch query and recompute efficiently when inputs change.</li>
+      <li><strong>Flows</strong> — the processing steps that move data into a table (append flows, AUTO CDC flows).</li>
+      <li><strong>Sinks</strong> — targets for writing streaming results out to external systems such as Kafka or Event Hubs.</li>
+      <li><strong>Expectations</strong> — declarative data-quality constraints attached to a dataset.</li>
+    </ul>
+    <p>A <strong>pipeline</strong> is the container for all of these. When it runs, it analyses the dependencies between your datasets, builds an execution graph, and orchestrates the whole thing automatically.</p>
+    <div class="box note">
+      <p class="h">📝 Note — SDP vs. Apache Spark Declarative Pipelines</p>
+      <p>The declarative engine is now part of open-source <strong>Apache Spark 4.1</strong> (via the <code>pyspark.pipelines</code> module). <strong>Lakeflow SDP</strong> is the Databricks product that extends it with managed features and runs on the Databricks Runtime — and it requires the <strong>Premium plan</strong>. Code written against the open-source module runs unmodified on Databricks.</p>
+    </div>
+  </section>
+
+  <section id="declare">
+    <h2 class="sec"><span class="n">03</span>Declarative vs. imperative — the core shift</h2>
+    <p>The single biggest advantage is captured in one number: SDP can reduce <strong>hundreds or thousands of lines</strong> of manual Spark and Structured Streaming code down to a handful. Compare the same Bronze→Silver step written both ways.</p>
+
+    <div class="code">
+      <div class="bar"><span class="lang">Python · hand-written Spark</span><span class="desc">Imperative — you manage everything</span></div>
+      <pre><span class="c"># You wire up reads, checkpoints, MERGE logic, and orchestration yourself</span>
+<span class="k">def</span> <span class="f">upsert_to_silver</span>(batch_df, batch_id):
+    batch_df.createOrReplaceTempView(<span class="s">"updates"</span>)
+    batch_df.sparkSession.sql(<span class="s">"""
+      MERGE INTO silver.orders t USING updates s
+      ON t.order_id = s.order_id
+      WHEN MATCHED THEN UPDATE SET *
+      WHEN NOT MATCHED THEN INSERT *"""</span>)
+
+(spark.readStream.format(<span class="s">"cloudFiles"</span>)
+   .option(<span class="s">"cloudFiles.format"</span>, <span class="s">"json"</span>)
+   .load(<span class="s">"/landing/orders/"</span>)
+   .filter(<span class="s">"amount >= 0"</span>)                     <span class="c"># hand-rolled quality check</span>
+   .writeStream
+   .foreachBatch(upsert_to_silver)
+   .option(<span class="s">"checkpointLocation"</span>, <span class="s">"/chk/silver"</span>)  <span class="c"># you manage state</span>
+   .trigger(availableNow=<span class="k">True</span>)
+   .start())
+<span class="c"># ...then separately schedule + order every job, add retries, add monitoring</span></pre>
+    </div>
+
+    <div class="code">
+      <div class="bar"><span class="lang">Python · Lakeflow SDP</span><span class="desc">Declarative — the engine manages it</span></div>
+      <pre><span class="k">from</span> pyspark <span class="k">import</span> pipelines <span class="k">as</span> dp
+
+<span class="f">@dp.table</span>(name=<span class="s">"silver_orders"</span>)                    <span class="c"># declares a streaming table</span>
+<span class="k">def</span> <span class="f">silver_orders</span>():
+    <span class="k">return</span> (spark.readStream.table(<span class="s">"bronze_orders"</span>)
+              .filter(<span class="s">"amount >= 0"</span>))
+<span class="c"># orchestration, checkpoints, retries, lineage — all handled for you</span></pre>
+    </div>
+
+    <div class="box tip">
+      <p class="h">💡 The load-bearing analogy</p>
+      <p>Hand-written Spark is <strong>driving with paper maps</strong> — you plan every turn, and if a road is closed you re-plan by hand. SDP is <strong>satnav</strong> — you enter the destination, and it computes the route, reroutes around failures, and tells you if you've gone wrong. Both get you there; only one does the thinking for you.</p>
+    </div>
+  </section>
+
+  <section id="orchestration">
+    <h2 class="sec"><span class="n">04</span>Advantage 1 — automatic orchestration</h2>
+    <p>With hand-written jobs, <em>you</em> decide the order things run in — Bronze before Silver, Silver before Gold — usually by wiring tasks together in a scheduler. Get the order wrong, or forget a dependency, and the pipeline breaks or produces stale data.</p>
+    <p>SDP reads the queries you declared, works out the dependency graph automatically, and runs each step <strong>in the correct order and with the maximum safe parallelism</strong>. Because a Silver table reads from a Bronze table, SDP simply knows Bronze must run first — you never declare the order explicitly.</p>
+
+    <div class="split">
+      <div class="cap">Who does the work</div>
+      <div class="cols">
+        <div class="col you">
+          <div class="lbl">◆ You declare</div>
+          <ul>
+            <li>The datasets you want (tables &amp; views)</li>
+            <li>The query that defines each one</li>
+            <li>The data-quality rules that must hold</li>
+          </ul>
+        </div>
+        <div class="col sdp">
+          <div class="lbl">● SDP handles</div>
+          <ul>
+            <li>Dependency order &amp; parallel execution</li>
+            <li>Incremental compute &amp; checkpoints</li>
+            <li>Retries, lineage, and quality metrics</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quality">
+    <h2 class="sec"><span class="n">05</span>Advantage 2 — built-in data quality</h2>
+    <p>In hand-written pipelines, data-quality checks are something you bolt on manually — a filter here, a count there, a custom alert somewhere else. SDP makes quality a <strong>first-class, declarative feature</strong> through <em>expectations</em>: constraints you attach to a dataset that are enforced and tracked automatically.</p>
+    <p>You choose what happens when a row violates a rule: keep it and record the metric, <strong>drop</strong> the bad row, or <strong>fail</strong> the update entirely. The pass/fail rates are captured in the pipeline's event log, so quality is observable, not guesswork.</p>
+
+    <div class="code">
+      <div class="bar"><span class="lang">SQL · Lakeflow SDP</span><span class="desc">Expectations enforce quality declaratively</span></div>
+      <pre><span class="k">CREATE OR REFRESH STREAMING TABLE</span> silver_orders (
+  <span class="c">-- drop rows that fail; violations tracked as metrics</span>
+  <span class="k">CONSTRAINT</span> valid_amount   <span class="k">EXPECT</span> (amount &gt;= 0) <span class="k">ON VIOLATION DROP ROW</span>,
+  <span class="k">CONSTRAINT</span> valid_order_id <span class="k">EXPECT</span> (order_id <span class="k">IS NOT NULL</span>) <span class="k">ON VIOLATION FAIL UPDATE</span>
+) <span class="k">AS SELECT</span> * <span class="k">FROM STREAM</span>(bronze_orders);</pre>
+    </div>
+
+    <div class="box exam">
+      <p class="h">🎯 Exam focus</p>
+      <p><strong>Expectations</strong> are a favourite exam topic. Know the three violation actions: the default (retain the row, record the metric), <strong>DROP ROW</strong> (discard failing rows), and <strong>FAIL UPDATE</strong> (halt the pipeline). This is quality enforcement you'd otherwise have to hand-build.</p>
+    </div>
+  </section>
+
+  <section id="incremental">
+    <h2 class="sec"><span class="n">06</span>Advantage 3 — incremental &amp; unified batch/stream</h2>
+    <p>Efficient pipelines process only <em>new</em> data, not the entire dataset every run. Doing that by hand means managing checkpoints, offsets, and state yourself — exactly the kind of thing that's easy to get subtly wrong.</p>
+    <ul>
+      <li><strong>Streaming tables</strong> incrementally ingest and process new rows as they arrive, tracking progress automatically.</li>
+      <li><strong>Materialized views</strong> recompute their results efficiently when upstream data changes, rather than from scratch.</li>
+      <li><strong>One framework for both:</strong> the same SDP code handles batch and streaming — the difference is often just <code>spark.read</code> vs. <code>spark.readStream</code>. You don't maintain two separate codebases.</li>
+    </ul>
+    <div class="box tip">
+      <p class="h">💡 Why this matters for cost</p>
+      <p>Incremental processing means a nightly pipeline touches only the day's new records, not the full history. Over a large table that's the difference between minutes and hours — and a proportional saving on compute.</p>
+    </div>
+  </section>
+
+  <section id="retries">
+    <h2 class="sec"><span class="n">07</span>Advantage 4 — automatic retries &amp; recovery</h2>
+    <p>Transient failures — a flaky network call, a briefly unavailable source — are a fact of production life. In hand-written jobs you write your own retry logic and hope you covered every case. SDP retries transient failures automatically, and it does so <strong>from the most granular, cheapest unit first</strong>: it retries the failed Spark <em>task</em>, then the <em>flow</em>, and only if needed the whole <em>pipeline</em>.</p>
+    <p>Combined with checkpoint-based state, this means a pipeline can recover from an interruption and pick up where it left off — without you writing a single line of recovery code.</p>
+    <div class="box note">
+      <p class="h">📝 Note — resilience is the default</p>
+      <p>Because the runtime owns state and retries, production reliability is something you <em>configure</em>, not something you <em>engineer</em>. That's a large chunk of operational code you simply never write.</p>
+    </div>
+  </section>
+
+  <section id="lineage">
+    <h2 class="sec"><span class="n">08</span>Advantage 5 — lineage, observability &amp; governance</h2>
+    <p>Because SDP knows every dataset and every dependency, it produces a <strong>live pipeline graph and end-to-end lineage for free</strong>. You can see exactly how Gold traces back to Silver traces back to Bronze — no separate lineage tooling required.</p>
+    <ul>
+      <li><strong>Automatic lineage:</strong> the dependency graph is visible in the UI and captured in Unity Catalog.</li>
+      <li><strong>Observability:</strong> a structured event log records runs, data-quality metrics, and failures.</li>
+      <li><strong>Governance built in:</strong> streaming tables and materialized views are <strong>Unity Catalog-managed tables</strong>, so permissions, auditing, and lineage come through UC natively.</li>
+    </ul>
+    <div class="box exam">
+      <p class="h">🎯 Exam focus</p>
+      <p>Remember that SDP outputs — streaming tables and materialized views — are always <strong>Unity Catalog-managed tables</strong>. This is why governance and lineage are automatic, and it's a common exam detail.</p>
+    </div>
+  </section>
+
+  <section id="cdc">
+    <h2 class="sec"><span class="n">09</span>Advantage 6 — CDC &amp; SCD without hand-rolled MERGE</h2>
+    <p>Change data capture and slowly changing dimensions are notoriously fiddly to implement by hand — you juggle MERGE statements, ordering columns, and out-of-order events. SDP provides <strong>AUTO CDC</strong> (the successor to APPLY CHANGES) to handle this declaratively, including both <strong>SCD Type 1</strong> (overwrite with latest) and <strong>SCD Type 2</strong> (retain full history).</p>
+    <p>You point AUTO CDC at a source of changes, tell it the key and the sequencing column, and it maintains the target dimension correctly — deduplicating, ordering, and applying inserts, updates, and deletes for you.</p>
+    <div class="box note">
+      <p class="h">📝 Note — the naming, again</p>
+      <p>You'll see this called <strong>APPLY CHANGES INTO</strong> in older material and <strong>AUTO CDC</strong> in current docs; the Python function moved from <code>dlt.apply_changes</code> to <code>dp.create_auto_cdc_flow</code>. Same capability, newer name.</p>
+    </div>
+  </section>
+
+  <section id="when-not">
+    <h2 class="sec"><span class="n">10</span>When hand-written Spark still wins</h2>
+    <p>Declarative isn't a silver bullet, and a good architect knows the edges. Hand-written Spark still makes sense when:</p>
+    <ul>
+      <li><strong>You need fine-grained control</strong> the framework doesn't expose — custom state handling, unusual sinks, or bespoke streaming logic.</li>
+      <li><strong>The workload isn't really a table-producing pipeline</strong> — one-off scripts, complex ML training loops, or arbitrary Python that doesn't fit the dataset model.</li>
+      <li><strong>You can't use the Premium plan</strong> or the managed runtime SDP requires.</li>
+      <li><strong>You're integrating with external orchestration</strong> where you deliberately want to own the control flow.</li>
+    </ul>
+    <p>For the large majority of production ETL that reads sources, transforms through Bronze/Silver/Gold, and enforces quality, SDP removes far more work than it costs — which is exactly why it's the recommended default.</p>
+  </section>
+
+  <section id="comparison">
+    <h2 class="sec"><span class="n">11</span>SDP vs. hand-written Spark</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Concern</th><th class="sdp-col">Lakeflow SDP</th><th class="hand-col">Hand-written Spark</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>Approach</th><td>Declarative (what)</td><td>Imperative (how)</td></tr>
+          <tr><th>Orchestration</th><td>Automatic from dependencies</td><td>You wire it up manually</td></tr>
+          <tr><th>Data quality</th><td>Built-in expectations</td><td>Hand-coded checks</td></tr>
+          <tr><th>Incremental processing</th><td>Automatic (STs &amp; MVs)</td><td>You manage checkpoints/state</td></tr>
+          <tr><th>Retries &amp; recovery</th><td>Automatic, task→flow→pipeline</td><td>You write retry logic</td></tr>
+          <tr><th>Lineage &amp; monitoring</th><td>Generated for free</td><td>Separate tooling</td></tr>
+          <tr><th>CDC / SCD</th><td>AUTO CDC (SCD 1 &amp; 2)</td><td>Manual MERGE</td></tr>
+          <tr><th>Code volume</th><td>A few lines</td><td>Hundreds to thousands</td></tr>
+          <tr><th>Best for</th><td>Most production ETL</td><td>Custom / non-standard logic</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="exam">
+    <h2 class="sec"><span class="n">12</span>Exam tips &amp; practice questions</h2>
+
+    <h4>Key facts to memorise</h4>
+    <ul>
+      <li><strong>SDP = declarative:</strong> you declare datasets; the engine handles orchestration, retries, incremental compute, and quality.</li>
+      <li><strong>Naming:</strong> Delta Live Tables → Lakeflow Spark Declarative Pipelines; open-sourced in Apache Spark 4.1.</li>
+      <li><strong>Objects:</strong> streaming tables, materialized views, flows, sinks, expectations — inside a pipeline.</li>
+      <li><strong>Outputs are UC-managed tables</strong> → automatic governance and lineage.</li>
+      <li><strong>Expectations</strong> = declarative quality: default / <code>DROP ROW</code> / <code>FAIL UPDATE</code>.</li>
+      <li><strong>AUTO CDC</strong> (formerly APPLY CHANGES) handles SCD Type 1 &amp; 2 declaratively.</li>
+      <li><strong>Requires the Premium plan.</strong></li>
+    </ul>
+
+    <hr class="rule">
+
+    <div class="pq">
+      <div class="qh">Practice question 1</div>
+      <div class="q">What is the primary advantage of a declarative pipeline framework over hand-written Spark jobs for production ETL?</div>
+      <ul class="opts">
+        <li><span>A.</span>It only runs on all-purpose clusters</li>
+        <li><span>B.</span>The engine handles orchestration, retries, and incremental processing automatically</li>
+        <li><span>C.</span>It eliminates the need for Delta Lake</li>
+        <li><span>D.</span>It requires no compute at all</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>Declarative pipelines let you declare the datasets you want while the engine manages orchestration, retries, checkpoints, and incremental computation — the work you would otherwise write by hand.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 2</div>
+      <div class="q">In Lakeflow Spark Declarative Pipelines, which construct enforces data-quality rules on a dataset?</div>
+      <ul class="opts">
+        <li><span>A.</span>Checkpoints</li>
+        <li><span>B.</span>Expectations</li>
+        <li><span>C.</span>Broadcast joins</li>
+        <li><span>D.</span>Instance pools</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>Expectations are declarative constraints (e.g. <code>EXPECT (amount &gt;= 0)</code>) that the pipeline enforces and tracks automatically, with a configurable action on violation.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 3</div>
+      <div class="q">A pipeline defines a Silver table that reads from a Bronze table. How does SDP determine that Bronze must run before Silver?</div>
+      <ul class="opts">
+        <li><span>A.</span>The engineer must specify the order in a config file</li>
+        <li><span>B.</span>Alphabetical ordering of table names</li>
+        <li><span>C.</span>SDP infers the dependency from the query and orchestrates automatically</li>
+        <li><span>D.</span>It runs all tables simultaneously regardless of dependencies</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: C</div><p>SDP analyses the queries, discovers that Silver depends on Bronze, and builds the execution graph automatically — you never declare the order explicitly.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 4</div>
+      <div class="q">Which expectation action causes rows failing a constraint to be discarded while the pipeline continues?</div>
+      <ul class="opts">
+        <li><span>A.</span>ON VIOLATION FAIL UPDATE</li>
+        <li><span>B.</span>ON VIOLATION DROP ROW</li>
+        <li><span>C.</span>ON VIOLATION RETRY</li>
+        <li><span>D.</span>The default (no action specified)</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p><code>DROP ROW</code> discards failing rows and continues. <code>FAIL UPDATE</code> halts the pipeline; the default keeps the row and records the violation as a metric. There is no <code>RETRY</code> violation action.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 5</div>
+      <div class="q">Which two dataset types are produced by a Lakeflow SDP pipeline, and what governance property do they share?</div>
+      <ul class="opts">
+        <li><span>A.</span>External tables and temporary views; no governance</li>
+        <li><span>B.</span>Streaming tables and materialized views; both are Unity Catalog-managed tables</li>
+        <li><span>C.</span>Global temp views and RDDs; both are session-scoped</li>
+        <li><span>D.</span>CSV files and JSON files; both are unmanaged</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>Streaming tables and materialized views are the core outputs, and both are Unity Catalog-managed tables — which is why lineage and governance are automatic.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 6</div>
+      <div class="q">When a transient failure occurs, how does SDP attempt recovery to minimise cost?</div>
+      <ul class="opts">
+        <li><span>A.</span>It immediately restarts the whole pipeline from scratch</li>
+        <li><span>B.</span>It retries from the most granular unit first: task, then flow, then pipeline</li>
+        <li><span>C.</span>It stops and waits for manual intervention</li>
+        <li><span>D.</span>It skips the failed data permanently</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>SDP retries the cheapest, most granular unit first — the Spark task — escalating to the flow and finally the whole pipeline only if needed. This makes recovery both automatic and cost-efficient.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 7</div>
+      <div class="q">A team needs to maintain a slowly changing dimension (SCD Type 2) with full history. What does SDP provide so they don't hand-write MERGE logic?</div>
+      <ul class="opts">
+        <li><span>A.</span>AUTO CDC (formerly APPLY CHANGES)</li>
+        <li><span>B.</span>A broadcast hint</li>
+        <li><span>C.</span>Z-ordering</li>
+        <li><span>D.</span>The VACUUM command</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: A</div><p>AUTO CDC (the successor to APPLY CHANGES) applies inserts, updates, and deletes declaratively and supports both SCD Type 1 and Type 2, handling ordering and deduplication for you.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 8</div>
+      <div class="q">Which statement about the relationship between SDP and Apache Spark is correct?</div>
+      <ul class="opts">
+        <li><span>A.</span>SDP is entirely proprietary with no open-source counterpart</li>
+        <li><span>B.</span>The declarative engine is open-sourced in Apache Spark 4.1; Lakeflow SDP extends it on the Databricks Runtime</li>
+        <li><span>C.</span>SDP replaces Apache Spark completely</li>
+        <li><span>D.</span>SDP only works outside of Databricks</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: B</div><p>Apache Spark Declarative Pipelines is part of open-source Spark 4.1 (the <code>pyspark.pipelines</code> module). Lakeflow SDP is the Databricks product that extends it with managed features and runs on the Databricks Runtime.</p></div></details>
+    </div>
+
+    <div class="pq">
+      <div class="qh">Practice question 9</div>
+      <div class="q">Which scenario is the strongest case for hand-written Spark instead of a declarative pipeline?</div>
+      <ul class="opts">
+        <li><span>A.</span>A standard Bronze→Silver→Gold ETL pipeline with quality checks</li>
+        <li><span>B.</span>Incremental ingestion from cloud storage into a managed table</li>
+        <li><span>C.</span>A workload needing bespoke custom state handling the framework doesn't expose</li>
+        <li><span>D.</span>Maintaining an SCD Type 2 dimension</li>
+      </ul>
+      <details class="rev"><summary>Reveal answer</summary><div class="ans"><div class="verdict">✅ Answer: C</div><p>Declarative pipelines excel at standard table-producing ETL (A, B, D). Hand-written Spark is justified when you need low-level control the framework doesn't offer, such as custom state management or unusual streaming logic.</p></div></details>
+    </div>
+  </section>
+
+  <section id="cheat">
+    <h2 class="sec"><span class="n">13</span>Quick-reference cheat sheet</h2>
+    <div class="cheat">
+      <div class="ch">Lakeflow Spark Declarative Pipelines <span>Subdomain 3.3</span></div>
+      <div class="grid">
+        <div class="cell"><div class="t">The core idea</div><p>Declare <strong>what</strong> datasets should exist; the engine handles <strong>how</strong> — orchestration, retries, incremental compute, quality.</p></div>
+        <div class="cell"><div class="t">Naming</div><p>DLT → <strong>Lakeflow SDP</strong>. Open-sourced in <strong>Apache Spark 4.1</strong>. API: <code>from pyspark import pipelines as dp</code>.</p></div>
+        <div class="cell"><div class="t">Objects</div><p><strong>Streaming tables</strong> (incremental) · <strong>materialized views</strong> (batch) · flows · sinks · expectations.</p></div>
+        <div class="cell"><div class="t">Data quality</div><p><strong>Expectations</strong>: default (track) · <code>DROP ROW</code> · <code>FAIL UPDATE</code>. Metrics in the event log.</p></div>
+        <div class="cell"><div class="t">Orchestration</div><p>Dependencies inferred from queries → correct order + max parallelism, automatically. Granular auto-retries.</p></div>
+        <div class="cell"><div class="t">Governance &amp; CDC</div><p>Outputs are <strong>UC-managed</strong> (free lineage). <strong>AUTO CDC</strong> handles SCD 1 &amp; 2. Premium plan required.</p></div>
+      </div>
+    </div>
+
+    <p>That's Subdomain 3.3. The one-line takeaway: <strong>declarative pipelines let you describe the destination, not the route.</strong> For standard production ETL — ingest, clean through Bronze/Silver/Gold, enforce quality, serve — Lakeflow SDP removes the orchestration, retry, incremental, quality, and lineage code you'd otherwise write and maintain by hand. Know the six advantages, know the objects, and remember the naming has changed but the concepts haven't.</p>
+    <p>Good luck on the exam!</p>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="footmeta">
+      Databricks Data Engineer Associate Exam Prep Series · Subdomain 3.3 — Lakeflow Spark Declarative Pipelines<br>
+      <a href="https://docs.databricks.com/aws/en/ldp/">Official Databricks — Lakeflow Spark Declarative Pipelines</a> · <a href="https://databricksprep.com/index.html">← Back to all topics</a>
+    </div>
+    <div class="coffee">
+      <h3>☕ Found this helpful?</h3>
+      <p>Every article on databricksprep.com is completely free — if this saved you study time, a £3 coffee means a lot!</p>
+      <a class="btn" href="https://ko-fi.com/nidhin">☕ Buy me a coffee</a>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+(function(){
+  var btn=document.getElementById('listenBtn');
+  if(!btn)return;
+  var synth=window.speechSynthesis;
+  var ltxt=btn.querySelector('.ltxt');
+  if(!synth){btn.style.display='none';return;}
+  var chunks=[],idx=0,playing=false;
+  function build(){
+    var src=document.getElementById('article');
+    if(!src)return[];
+    var c=src.cloneNode(true);
+    c.querySelectorAll('.code,pre,nav.toc,.cheat,.badges,footer,.coffee,.split,.tablewrap').forEach(function(e){e.remove();});
+    var raw=c.innerText.replace(/\s+/g,' ').trim();
+    var parts=raw.match(/[^.!?]+[.!?]+|\S.*$/g)||[raw];
+    var out=[],buf='';
+    parts.forEach(function(s){
+      if((buf+s).length>230){if(buf)out.push(buf.trim());buf=s;}else buf+=s;
+    });
+    if(buf.trim())out.push(buf.trim());
+    return out;
+  }
+  function stop(){playing=false;synth.cancel();btn.classList.remove('playing');ltxt.textContent='Listen';}
+  function next(){
+    if(idx>=chunks.length){stop();return;}
+    var u=new SpeechSynthesisUtterance(chunks[idx]);
+    u.rate=1.0;u.pitch=1.0;
+    u.onend=function(){if(playing){idx++;next();}};
+    u.onerror=function(){stop();};
+    synth.speak(u);
+  }
+  btn.addEventListener('click',function(){
+    if(playing){stop();return;}
+    chunks=build();idx=0;
+    if(!chunks.length)return;
+    playing=true;btn.classList.add('playing');ltxt.textContent='Stop';
+    synth.cancel();next();
+  });
+  window.addEventListener('beforeunload',function(){synth.cancel();});
+})();
+</script>
+</body>
+</html>
